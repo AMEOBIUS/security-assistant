@@ -1,0 +1,32 @@
+﻿# Python
+__pycache__/
+*.py[cod]
+*.so
+venv/
+.venv
+*.egg-info/
+
+# IDE
+.vscode/
+.idea/
+.cursor/
+
+# Environment
+.env
+.env.local
+secrets/
+
+# Reports
+security-reports/
+reports/
+*.db
+
+# Test Coverage
+.coverage
+htmlcov/
+.pytest_cache/
+
+# Temporary
+*.tmp
+*.log
+.DS_Store

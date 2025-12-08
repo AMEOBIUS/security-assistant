@@ -1,0 +1,35 @@
+# Core dependencies
+requests>=2.31.0
+urllib3>=2.0.0
+pyyaml>=6.0.0
+
+# Scanners
+semgrep>=1.144.0
+
+# Report generation
+jinja2>=3.1.6
+markdown>=3.10
+markdown-it-py>=3.0.0  # Robust Markdown parsing for remediation templates
+weasyprint>=66.0  # Optional: for PDF generation
+
+# Scheduling and automation
+apscheduler>=3.11.1
+sqlalchemy>=2.0.44
+tenacity>=9.1.2
+pydantic>=2.5.0
+
+# Performance monitoring
+psutil>=7.1.3
+
+# Testing
+pytest>=7.4.0
+pytest-cov>=4.1.0
+pytest-mock>=3.11.0
+
+# Code quality
+bandit>=1.7.5
+pylint>=3.0.0
+black>=23.0.0
+
+# Development
+python-dotenv>=1.0.0
