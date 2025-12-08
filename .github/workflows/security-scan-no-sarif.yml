@@ -172,16 +172,6 @@ jobs:
               f.write(f'low_count={result.findings_by_severity.get(\"LOW\", 0)}\\n')
           "
       
-      - name: Generate SARIF report
-        if: always()
-        run: |
-          python scripts/generate_sarif.py
-      
-      - name: Generate HTML report
-        if: always()
-        run: |
-          python scripts/generate_html_report.py
-      
       - name: Generate Markdown summary
         if: always()
         run: |

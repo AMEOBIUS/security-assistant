@@ -23,7 +23,7 @@ Refactored: Session 47 - Now extends BaseScanner
 
 import json
 import logging
-import shutil  # Kept for backward compatibility with tests
+import shutil
 import subprocess
 from datetime import datetime
 from pathlib import Path
@@ -528,7 +528,7 @@ class TrivyScanner:
         
         if finding.pkg_type == "secret":
             description_parts.extend([
-                f"**Type:** Secret Detection",
+                "**Type:** Secret Detection",
                 f"**Rule:** {finding.vulnerability_id}",
                 f"**Location:** Lines {finding.start_line}-{finding.end_line}",
                 "",
@@ -542,7 +542,7 @@ class TrivyScanner:
             ])
         elif finding.pkg_type == "misconfig":
             description_parts.extend([
-                f"**Type:** Misconfiguration",
+                "**Type:** Misconfiguration",
                 f"**Check ID:** {finding.vulnerability_id}",
                 "",
                 "### Description",
