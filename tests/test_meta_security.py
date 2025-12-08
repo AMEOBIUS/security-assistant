@@ -38,7 +38,7 @@ class TestScannerIntegrityValidator:
         assert len(result.errors) == 0
         assert validator.is_validated(scanner)
     
-    @patch('security_assistant.scanners.semgrep_scanner.subprocess.run')
+    @patch('subprocess.run')
     def test_valid_semgrep_scanner(self, mock_run):
         """Test validation of legitimate Semgrep scanner."""
         # Skip if semgrep module not installed

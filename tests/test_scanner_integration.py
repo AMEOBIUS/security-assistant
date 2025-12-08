@@ -14,7 +14,7 @@ from security_assistant.gitlab_api import GitLabAPI, IssueData
 class TestScannerGitLabIntegration:
     """Integration tests for scanner + GitLab workflow."""
     
-    @patch('security_assistant.scanners.bandit_scanner.subprocess.run')
+    @patch('subprocess.run')
     def test_scan_and_create_issue_workflow(self, mock_run):
         """Test complete workflow: scan file → create GitLab issue."""
         # Mock Bandit version check
@@ -59,7 +59,7 @@ class TestScannerGitLabIntegration:
         assert issue.confidential is True
     
     @patch('security_assistant.gitlab_api.requests.Session')
-    @patch('security_assistant.scanners.bandit_scanner.subprocess.run')
+    @patch('subprocess.run')
     def test_full_integration_with_mocked_gitlab(self, mock_run, mock_session):
         """Test full integration with mocked GitLab API."""
         # Mock Bandit
@@ -126,7 +126,7 @@ class TestScannerGitLabIntegration:
             if "GITLAB_TOKEN" in os.environ:
                 del os.environ["GITLAB_TOKEN"]
     
-    @patch('security_assistant.scanners.bandit_scanner.subprocess.run')
+    @patch('subprocess.run')
     def test_multiple_findings_to_issues(self, mock_run):
         """Test converting multiple findings to issues."""
         mock_run.return_value = Mock(returncode=0, stdout="bandit 1.7.5")
@@ -167,7 +167,7 @@ class TestScannerGitLabIntegration:
         assert "high-priority" in issues[1].labels  # MEDIUM severity
         assert "high-priority" in issues[2].labels  # MEDIUM severity
     
-    @patch('security_assistant.scanners.bandit_scanner.subprocess.run')
+    @patch('subprocess.run')
     def test_issue_description_formatting(self, mock_run):
         """Test that issue description is properly formatted."""
         mock_run.return_value = Mock(returncode=0, stdout="bandit 1.7.5")
@@ -213,7 +213,7 @@ class TestRealFileScanning:
         not os.path.exists("security_assistant/gitlab_api.py"),
         reason="Test file not found"
     )
-    @patch('security_assistant.scanners.bandit_scanner.subprocess.run')
+    @patch('subprocess.run')
     def test_scan_real_file(self, mock_run):
         """Test scanning a real Python file from the project."""
         # Mock Bandit version check

@@ -207,7 +207,7 @@ class TestBanditScanner:
         # Just verify scanner is initialized correctly
         assert scanner.name == "bandit"
     
-    @patch('security_assistant.scanners.base_scanner.subprocess.run')
+    @patch('subprocess.run')
     @patch('security_assistant.scanners.base_scanner.shutil.which')
     @patch('pathlib.Path.is_file')
     @patch('pathlib.Path.exists')
@@ -235,7 +235,7 @@ class TestBanditScanner:
         assert result.high_severity_count == 1
         assert result.medium_severity_count == 1
     
-    @patch('security_assistant.scanners.base_scanner.subprocess.run')
+    @patch('subprocess.run')
     @patch('security_assistant.scanners.base_scanner.shutil.which')
     @patch('pathlib.Path.is_dir')
     @patch('pathlib.Path.exists')
@@ -258,7 +258,7 @@ class TestBanditScanner:
         assert isinstance(result, ScanResult)
         assert len(result.findings) == 3
     
-    @patch('security_assistant.scanners.bandit_scanner.subprocess.run')
+    @patch('subprocess.run')
     def test_parse_bandit_output(self, mock_run):
         """Test parsing Bandit JSON output."""
         mock_run.return_value = Mock(returncode=0)
@@ -276,7 +276,7 @@ class TestBanditScanner:
         assert finding.line_number == 42
         assert finding.cwe_id == 259
     
-    @patch('security_assistant.scanners.bandit_scanner.subprocess.run')
+    @patch('subprocess.run')
     def test_severity_filtering(self, mock_run):
         """Test filtering by severity."""
         mock_run.return_value = Mock(returncode=0)
@@ -288,7 +288,7 @@ class TestBanditScanner:
         assert len(result.findings) == 1
         assert result.findings[0].severity == "HIGH"
     
-    @patch('security_assistant.scanners.bandit_scanner.subprocess.run')
+    @patch('subprocess.run')
     def test_confidence_filtering(self, mock_run):
         """Test filtering by confidence."""
         mock_run.return_value = Mock(returncode=0)
@@ -301,7 +301,7 @@ class TestBanditScanner:
         assert len(result.findings) == 2
         assert all(f.confidence == "HIGH" for f in result.findings)
     
-    @patch('security_assistant.scanners.bandit_scanner.subprocess.run')
+    @patch('subprocess.run')
     def test_finding_to_issue(self, mock_run):
         """Test converting finding to GitLab issue."""
         mock_run.return_value = Mock(returncode=0)
@@ -332,7 +332,7 @@ class TestBanditScanner:
         assert "critical" in issue.labels
         assert issue.confidential is True
     
-    @patch('security_assistant.scanners.bandit_scanner.subprocess.run')
+    @patch('subprocess.run')
     def test_scan_result_to_issues_individual(self, mock_run):
         """Test converting scan result to individual issues."""
         mock_run.return_value = Mock(returncode=0)
@@ -346,7 +346,7 @@ class TestBanditScanner:
         assert all(isinstance(issue, IssueData) for issue in issues)
         assert all(issue.confidential for issue in issues)
     
-    @patch('security_assistant.scanners.bandit_scanner.subprocess.run')
+    @patch('subprocess.run')
     def test_scan_result_to_issues_grouped(self, mock_run):
         """Test converting scan result to grouped issues."""
         mock_run.return_value = Mock(returncode=0)
@@ -361,7 +361,7 @@ class TestBanditScanner:
         assert "3 issues" in issues[0].title
         assert "multiple-issues" in issues[0].labels
     
-    @patch('security_assistant.scanners.base_scanner.subprocess.run')
+    @patch('subprocess.run')
     @patch('security_assistant.scanners.base_scanner.shutil.which')
     def test_bandit_timeout(self, mock_which, mock_run):
         """Test Bandit timeout handling."""
@@ -378,7 +378,7 @@ class TestBanditScanner:
         with pytest.raises(ScannerError, match="timed out"):
             scanner._run_scan(["test.py"])
     
-    @patch('security_assistant.scanners.bandit_scanner.subprocess.run')
+    @patch('subprocess.run')
     def test_invalid_json_output(self, mock_run):
         """Test handling invalid JSON output."""
         mock_run.return_value = Mock(returncode=0)
