@@ -257,55 +257,52 @@ class TestSemgrepScanResult:
 class TestSemgrepScanner:
     """Test SemgrepScanner class."""
     
-    @patch('security_assistant.scanners.semgrep_scanner.subprocess.run')
-    def test_scanner_initialization(self, mock_run):
+    @patch('security_assistant.scanners.base_scanner.shutil.which')
+    def test_scanner_initialization(self, mock_which):
         """Test scanner initialization."""
-        # Mock Semgrep version check
-        mock_run.return_value = Mock(returncode=0, stdout="1.144.0")
+        # Mock Semgrep installation check
+        mock_which.return_value = "/usr/bin/semgrep"
         
         scanner = SemgrepScanner(min_severity="WARNING", config="p/security-audit")
         
-        assert scanner.min_severity == "WARNING"
-        assert scanner.config == "p/security-audit"
-        assert "venv" in scanner.exclude_dirs
+        assert scanner.config.min_severity == "WARNING"
+        assert scanner.semgrep_config == "p/security-audit"
+        assert "venv" in scanner.config.exclude_dirs
     
-    @patch('security_assistant.scanners.semgrep_scanner.subprocess.run')
-    def test_semgrep_not_installed(self, mock_run):
+    @patch('security_assistant.scanners.base_scanner.shutil.which')
+    def test_semgrep_not_installed(self, mock_which):
         """Test error when Semgrep not installed."""
-        mock_run.side_effect = FileNotFoundError()
+        mock_which.return_value = None
         
         with pytest.raises(SemgrepNotInstalledError):
             SemgrepScanner()
     
-    @patch('security_assistant.scanners.semgrep_scanner.subprocess.run')
-    def test_scan_file_not_found(self, mock_run):
+    @patch('security_assistant.scanners.base_scanner.shutil.which')
+    def test_scan_file_not_found(self, mock_which):
         """Test scanning non-existent file."""
-        mock_run.return_value = Mock(returncode=0)
+        mock_which.return_value = "/usr/bin/semgrep"
         scanner = SemgrepScanner()
         
-        with pytest.raises(SemgrepScannerError, match="File not found"):
+        with pytest.raises(FileNotFoundError):
             scanner.scan_file("nonexistent.py")
     
-    @patch('security_assistant.scanners.semgrep_scanner.subprocess.run')
-    @patch('os.path.exists')
-    @patch('os.path.isfile')
-    def test_scan_file_success(self, mock_isfile, mock_exists, mock_run):
+    @patch('security_assistant.scanners.base_scanner.subprocess.run')
+    @patch('security_assistant.scanners.base_scanner.shutil.which')
+    @patch('pathlib.Path.is_file')
+    @patch('pathlib.Path.exists')
+    def test_scan_file_success(self, mock_exists, mock_is_file, mock_which, mock_run):
         """Test successful file scan."""
-        # Mock file existence
+        # Mock installation and file checks
+        mock_which.return_value = "/usr/bin/semgrep"
         mock_exists.return_value = True
-        mock_isfile.return_value = True
-        
-        # Mock Semgrep version check
-        version_result = Mock(returncode=0, stdout="1.144.0")
+        mock_is_file.return_value = True
         
         # Mock Semgrep scan
-        scan_result = Mock(
+        mock_run.return_value = Mock(
             returncode=1,  # Exit code 1 means findings found
             stdout=json.dumps(SAMPLE_SEMGREP_OUTPUT),
             stderr=""
         )
-        
-        mock_run.side_effect = [version_result, scan_result]
         
         scanner = SemgrepScanner()
         result = scanner.scan_file("app.py")
@@ -314,26 +311,23 @@ class TestSemgrepScanner:
         assert len(result.findings) == 3
         assert result.files_scanned == 3
     
-    @patch('security_assistant.scanners.semgrep_scanner.subprocess.run')
-    @patch('os.path.exists')
-    @patch('os.path.isdir')
-    def test_scan_directory_success(self, mock_isdir, mock_exists, mock_run):
+    @patch('security_assistant.scanners.base_scanner.subprocess.run')
+    @patch('security_assistant.scanners.base_scanner.shutil.which')
+    @patch('pathlib.Path.is_dir')
+    @patch('pathlib.Path.exists')
+    def test_scan_directory_success(self, mock_exists, mock_is_dir, mock_which, mock_run):
         """Test successful directory scan."""
-        # Mock directory existence
+        # Mock installation and directory checks
+        mock_which.return_value = "/usr/bin/semgrep"
         mock_exists.return_value = True
-        mock_isdir.return_value = True
-        
-        # Mock Semgrep version check
-        version_result = Mock(returncode=0, stdout="1.144.0")
+        mock_is_dir.return_value = True
         
         # Mock Semgrep scan
-        scan_result = Mock(
+        mock_run.return_value = Mock(
             returncode=1,
             stdout=json.dumps(SAMPLE_SEMGREP_OUTPUT),
             stderr=""
         )
-        
-        mock_run.side_effect = [version_result, scan_result]
         
         scanner = SemgrepScanner()
         result = scanner.scan_directory("src/")
@@ -341,10 +335,10 @@ class TestSemgrepScanner:
         assert result.has_findings
         assert len(result.findings) == 3
     
-    @patch('security_assistant.scanners.semgrep_scanner.subprocess.run')
-    def test_parse_semgrep_output(self, mock_run):
+    @patch('security_assistant.scanners.base_scanner.shutil.which')
+    def test_parse_semgrep_output(self, mock_which):
         """Test parsing Semgrep JSON output."""
-        mock_run.return_value = Mock(returncode=0)
+        mock_which.return_value = "/usr/bin/semgrep"
         scanner = SemgrepScanner()
         
         result = scanner._parse_semgrep_output(json.dumps(SAMPLE_SEMGREP_OUTPUT))
@@ -360,10 +354,10 @@ class TestSemgrepScanner:
         assert finding.start_line == 10
         assert "CWE-78" in finding.cwe_ids
     
-    @patch('security_assistant.scanners.semgrep_scanner.subprocess.run')
-    def test_severity_filtering(self, mock_run):
+    @patch('security_assistant.scanners.base_scanner.shutil.which')
+    def test_severity_filtering(self, mock_which):
         """Test filtering by severity."""
-        mock_run.return_value = Mock(returncode=0)
+        mock_which.return_value = "/usr/bin/semgrep"
         
         # Only ERROR severity
         scanner = SemgrepScanner(min_severity="ERROR")
@@ -379,10 +373,10 @@ class TestSemgrepScanner:
         assert len(result.findings) == 2
         assert all(f.severity in ["ERROR", "WARNING"] for f in result.findings)
     
-    @patch('security_assistant.scanners.semgrep_scanner.subprocess.run')
-    def test_finding_to_issue(self, mock_run):
+    @patch('security_assistant.scanners.base_scanner.shutil.which')
+    def test_finding_to_issue(self, mock_which):
         """Test converting finding to GitLab issue."""
-        mock_run.return_value = Mock(returncode=0)
+        mock_which.return_value = "/usr/bin/semgrep"
         scanner = SemgrepScanner()
         
         finding = SemgrepFinding(
@@ -414,10 +408,10 @@ class TestSemgrepScanner:
         assert "python" in issue.labels
         assert issue.confidential is True
     
-    @patch('security_assistant.scanners.semgrep_scanner.subprocess.run')
-    def test_scan_result_to_individual_issues(self, mock_run):
+    @patch('security_assistant.scanners.base_scanner.shutil.which')
+    def test_scan_result_to_individual_issues(self, mock_which):
         """Test converting scan result to individual issues."""
-        mock_run.return_value = Mock(returncode=0)
+        mock_which.return_value = "/usr/bin/semgrep"
         scanner = SemgrepScanner()
         
         result = scanner._parse_semgrep_output(json.dumps(SAMPLE_SEMGREP_OUTPUT))
@@ -427,10 +421,10 @@ class TestSemgrepScanner:
         assert all(isinstance(issue.title, str) for issue in issues)
         assert all(issue.confidential for issue in issues)
     
-    @patch('security_assistant.scanners.semgrep_scanner.subprocess.run')
-    def test_scan_result_to_grouped_issues(self, mock_run):
+    @patch('security_assistant.scanners.base_scanner.shutil.which')
+    def test_scan_result_to_grouped_issues(self, mock_which):
         """Test converting scan result to grouped issues."""
-        mock_run.return_value = Mock(returncode=0)
+        mock_which.return_value = "/usr/bin/semgrep"
         scanner = SemgrepScanner()
         
         result = scanner._parse_semgrep_output(json.dumps(SAMPLE_SEMGREP_OUTPUT))
@@ -440,63 +434,57 @@ class TestSemgrepScanner:
         assert len(issues) == 3
         assert all("Security:" in issue.title for issue in issues)
     
-    @patch('security_assistant.scanners.semgrep_scanner.subprocess.run')
-    @patch('os.path.exists')
-    @patch('os.path.isfile')
-    def test_timeout_handling(self, mock_isfile, mock_exists, mock_run):
+    @patch('security_assistant.scanners.base_scanner.subprocess.run')
+    @patch('security_assistant.scanners.base_scanner.shutil.which')
+    @patch('pathlib.Path.is_file')
+    @patch('pathlib.Path.exists')
+    def test_timeout_handling(self, mock_exists, mock_is_file, mock_which, mock_run):
         """Test timeout handling."""
+        from security_assistant.scanners.base_scanner import ScannerError
+        mock_which.return_value = "/usr/bin/semgrep"
         mock_exists.return_value = True
-        mock_isfile.return_value = True
-        
-        # Mock version check
-        version_result = Mock(returncode=0)
-        
-        # Mock timeout
-        from subprocess import TimeoutExpired
-        mock_run.side_effect = [
-            version_result,
-            TimeoutExpired("semgrep", 600)
-        ]
+        mock_is_file.return_value = True
         
         scanner = SemgrepScanner()
         
-        with pytest.raises(SemgrepScannerError, match="timeout"):
+        # Mock timeout
+        from subprocess import TimeoutExpired
+        mock_run.side_effect = TimeoutExpired("semgrep", 600)
+        
+        with pytest.raises(ScannerError, match="timed out"):
             scanner.scan_file("app.py")
     
-    @patch('security_assistant.scanners.semgrep_scanner.subprocess.run')
-    def test_invalid_json_handling(self, mock_run):
+    @patch('security_assistant.scanners.base_scanner.shutil.which')
+    def test_invalid_json_handling(self, mock_which):
         """Test handling of invalid JSON output."""
-        mock_run.return_value = Mock(returncode=0)
+        mock_which.return_value = "/usr/bin/semgrep"
         scanner = SemgrepScanner()
         
         with pytest.raises(SemgrepScannerError, match="Failed to parse"):
             scanner._parse_semgrep_output("invalid json {")
     
-    @patch('security_assistant.scanners.semgrep_scanner.subprocess.run')
-    @patch('os.path.exists')
-    @patch('os.path.isfile')
-    def test_custom_rules(self, mock_isfile, mock_exists, mock_run):
+    @patch('security_assistant.scanners.base_scanner.subprocess.run')
+    @patch('security_assistant.scanners.base_scanner.shutil.which')
+    @patch('pathlib.Path.is_file')
+    @patch('pathlib.Path.exists')
+    def test_custom_rules(self, mock_exists, mock_is_file, mock_which, mock_run):
         """Test using custom rules."""
+        mock_which.return_value = "/usr/bin/semgrep"
         mock_exists.return_value = True
-        mock_isfile.return_value = True
-        
-        # Mock version check
-        version_result = Mock(returncode=0)
+        mock_is_file.return_value = True
         
         # Mock scan
-        scan_result = Mock(
+        mock_run.return_value = Mock(
             returncode=0,
             stdout=json.dumps({"results": [], "errors": [], "paths": {"scanned": []}}),
             stderr=""
         )
         
-        mock_run.side_effect = [version_result, scan_result]
-        
         scanner = SemgrepScanner(custom_rules=["custom_rules.yaml", "p/custom"])
         scanner.scan_file("app.py")
         
         # Verify custom rules were added to command
-        call_args = mock_run.call_args_list[1][0][0]
+        call_args = mock_run.call_args[0][0]
         assert "--config" in call_args
         assert "custom_rules.yaml" in call_args
 

@@ -92,7 +92,7 @@ class TestIntelligentAnalysisIntegration(unittest.TestCase):
         )
         
         # Manually trigger detection since we are testing internal logic or mocking scan
-        self.orchestrator._detect_false_positives([finding])
+        self.orchestrator._enrichment_service.detect_false_positives([finding])
         
         self.assertTrue(finding.is_false_positive)
         self.assertEqual(finding.fp_confidence, 0.8)

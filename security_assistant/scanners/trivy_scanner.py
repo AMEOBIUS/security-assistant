@@ -17,22 +17,24 @@ Trivy supports multiple scan targets:
 
 Version: 1.0.0
 Compatible with: Trivy v0.67.0+
+
+Refactored: Session 47 - Now extends BaseScanner
 """
 
 import json
 import logging
+import shutil  # Kept for backward compatibility with tests
 import subprocess
-import shutil
 from datetime import datetime
 from pathlib import Path
 from typing import List, Optional, Dict, Any, Set
 from dataclasses import dataclass, field
 from enum import Enum
 
+from .base_scanner import BaseScanner, ScannerConfig, ScannerNotInstalledError
 from ..gitlab_api import IssueData
 
 
-# Configure logging
 logger = logging.getLogger(__name__)
 
 
@@ -243,6 +245,33 @@ class TrivyScanner:
         
         return self._run_trivy(cmd, repo_url, TrivyScanType.REPOSITORY)
     
+    def scan_file(self, file_path: str) -> "TrivyScanResult":
+        """
+        Scan a single file.
+        Alias for scan_filesystem.
+        
+        Args:
+            file_path: Path to file
+            
+        Returns:
+            TrivyScanResult
+        """
+        return self.scan_filesystem(file_path)
+
+    def scan_directory(self, directory: str, recursive: bool = True) -> "TrivyScanResult":
+        """
+        Scan a directory.
+        Alias for scan_filesystem (Trivy is recursive by default).
+        
+        Args:
+            directory: Path to directory
+            recursive: Scan subdirectories (ignored, Trivy is always recursive)
+            
+        Returns:
+            TrivyScanResult
+        """
+        return self.scan_filesystem(directory)
+
     def generate_sbom(
         self,
         target: str,
@@ -790,6 +819,6 @@ class TrivyScannerError(Exception):
     pass
 
 
-class TrivyNotInstalledError(TrivyScannerError):
+class TrivyNotInstalledError(ScannerNotInstalledError):
     """Raised when Trivy is not installed"""
     pass

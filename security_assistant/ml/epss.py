@@ -14,10 +14,12 @@ Version: 1.0.0
 
 import logging
 import requests
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Union
 from datetime import datetime, timedelta
-from dataclasses import dataclass
+from pathlib import Path
+from dataclasses import dataclass, asdict
 import time
+import json
 
 
 logger = logging.getLogger(__name__)
@@ -57,6 +59,7 @@ class EPSSClient:
         self,
         cache_enabled: bool = True,
         timeout: int = 10,
+        cache_file: Optional[Union[str, Path]] = None,
     ):
         """
         Initialize EPSS client.
@@ -64,17 +67,23 @@ class EPSSClient:
         Args:
             cache_enabled: Enable in-memory caching (default: True)
             timeout: Request timeout in seconds (default: 10)
+            cache_file: Path to persistent cache file (optional)
         """
         self.cache_enabled = cache_enabled
         self.timeout = timeout
+        self.cache_file = Path(cache_file) if cache_file else None
         
         # In-memory cache: {cve_id: (EPSSScore, timestamp)}
         self._cache: Dict[str, tuple[EPSSScore, datetime]] = {}
         
+        # Load persistent cache if enabled
+        if self.cache_enabled and self.cache_file:
+            self._load_cache_from_file()
+        
         # Rate limiting
         self._last_request_time: Optional[datetime] = None
         
-        logger.info(f"Initialized EPSSClient (cache={cache_enabled})")
+        logger.info(f"Initialized EPSSClient (cache={cache_enabled}, file={self.cache_file})")
     
     def get_score(self, cve_id: str) -> Optional[float]:
         """
@@ -138,6 +147,10 @@ class EPSSClient:
             if self.cache_enabled:
                 for cve_id, epss_score in fetched_scores.items():
                     self._add_to_cache(cve_id, epss_score)
+                
+                # Save to file if configured
+                if self.cache_file:
+                    self._save_cache_to_file()
             
             # Merge with cached scores
             cached_scores.update({cve: score.epss for cve, score in fetched_scores.items()})
@@ -222,6 +235,56 @@ class EPSSClient:
         except (ValueError, KeyError) as e:
             logger.error(f"Failed to parse EPSS API response: {e}")
             return {}
+
+    def _load_cache_from_file(self) -> None:
+        """Load cache from file."""
+        if not self.cache_file or not self.cache_file.exists():
+            return
+            
+        try:
+            with open(self.cache_file, "r") as f:
+                data = json.load(f)
+                
+            loaded_count = 0
+            for cve_id, entry in data.items():
+                try:
+                    score_data = entry["score"]
+                    timestamp_str = entry["timestamp"]
+                    timestamp = datetime.fromisoformat(timestamp_str)
+                    
+                    # Convert dict to EPSSScore
+                    score = EPSSScore(**score_data)
+                    self._cache[cve_id] = (score, timestamp)
+                    loaded_count += 1
+                except (ValueError, KeyError, TypeError):
+                    continue
+                    
+            logger.info(f"Loaded {loaded_count} EPSS scores from cache file")
+            
+        except Exception as e:
+            logger.warning(f"Failed to load EPSS cache file: {e}")
+
+    def _save_cache_to_file(self) -> None:
+        """Save cache to file."""
+        if not self.cache_file:
+            return
+            
+        try:
+            data = {}
+            for cve_id, (score, timestamp) in self._cache.items():
+                data[cve_id] = {
+                    "score": asdict(score),
+                    "timestamp": timestamp.isoformat()
+                }
+            
+            self.cache_file.parent.mkdir(parents=True, exist_ok=True)
+            with open(self.cache_file, "w") as f:
+                json.dump(data, f)
+            
+            logger.info(f"Saved {len(self._cache)} EPSS scores to cache file")
+            
+        except Exception as e:
+            logger.warning(f"Failed to save EPSS cache file: {e}")
     
     def _get_from_cache(self, cve_id: str) -> Optional[EPSSScore]:
         """

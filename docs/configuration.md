@@ -2,6 +2,18 @@
 
 Security Assistant can be configured via a YAML file (`security-assistant.yaml`) or environment variables.
 
+## JSON Schema Validation
+
+For IDE autocompletion and validation (VS Code, IntelliJ, etc.), you can use the generated JSON Schema:
+
+- **Schema URL**: [docs/config-schema.json](config-schema.json)
+
+To use it in VS Code, add this to the top of your `security-assistant.yaml`:
+
+```yaml
+# yaml-language-server: $schema=./docs/config-schema.json
+```
+
 ## Configuration File
 
 Create a default configuration file:
@@ -13,6 +25,8 @@ security-assistant config --create
 ### Example `security-assistant.yaml`
 
 ```yaml
+# yaml-language-server: $schema=./docs/config-schema.json
+
 # General Settings
 scan_target: "."
 verbose: false
@@ -27,7 +41,7 @@ bandit:
 
 semgrep:
   enabled: true
-  config: ["auto"]  # or specific rules e.g. "p/security-audit"
+  rules: ["auto"]  # or specific rules e.g. "p/security-audit"
 
 trivy:
   enabled: true

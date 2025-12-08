@@ -1,0 +1,104 @@
+# Security Assistant Configuration Example
+# Copy this file to security-assistant.yaml and customize as needed
+
+# Bandit Scanner Configuration
+bandit:
+  enabled: true
+  severity_level: low  # low, medium, high
+  confidence_level: low  # low, medium, high
+  exclude_dirs:
+    - tests
+    - test
+    - .git
+    - .venv
+    - venv
+    - node_modules
+  skip_tests: []  # List of test IDs to skip (e.g., ['B101', 'B601'])
+  config_file: null  # Path to custom Bandit config file
+  extra_args: []
+  timeout: 300
+
+# Semgrep Scanner Configuration
+semgrep:
+  enabled: true
+  rules:
+    - auto  # Use auto-detection, or specify rule sets
+    # - p/security-audit
+    # - p/owasp-top-ten
+    # - p/python
+  exclude_rules: []  # List of rule IDs to exclude
+  max_memory: 5000  # MB
+  max_target_bytes: 1000000  # 1MB
+  config_file: null
+  extra_args: []
+  timeout: 300
+
+# Trivy Scanner Configuration
+trivy:
+  enabled: true
+  severity:
+    - CRITICAL
+    - HIGH
+    - MEDIUM
+    - LOW
+  scanners:
+    - vuln  # Vulnerability scanning
+    - secret  # Secret detection
+    - config  # Configuration scanning
+  skip_dirs:
+    - .git
+    - .venv
+    - venv
+    - node_modules
+  config_file: null
+  extra_args: []
+  timeout: 300
+
+# Orchestrator Configuration
+orchestrator:
+  deduplication_strategy: both  # location, content, or both
+  max_workers: 3  # Number of parallel scanner workers
+  parallel_execution: true
+  continue_on_error: true  # Continue if one scanner fails
+
+# Report Configuration
+report:
+  formats:
+    - json
+    - html
+    - markdown
+    # - sarif
+    # - text
+  output_dir: security-reports
+  include_code_snippets: true
+  max_snippet_lines: 10
+  group_by: severity  # severity, scanner, or file
+
+# GitLab Integration
+gitlab:
+  enabled: false
+  url: https://gitlab.com  # GitLab instance URL
+  token: null  # GitLab API token (or use SA_GITLAB_TOKEN env var)
+  project_id: null  # Project ID or path (e.g., 'namespace/project')
+  create_issues: false
+  priority_threshold: 70  # Only create issues for findings with priority >= 70
+  max_issues: 10  # Maximum number of issues to create per scan
+  issue_labels:
+    - security
+    - automated
+  assignee_ids: []  # List of user IDs to assign issues to
+
+# Severity Thresholds
+thresholds:
+  fail_on_critical: true  # Fail if critical findings are found
+  fail_on_high: false  # Fail if high severity findings are found
+  fail_on_medium: false  # Fail if medium severity findings are found
+  max_critical: 0  # Maximum allowed critical findings
+  max_high: 10  # Maximum allowed high severity findings
+  max_medium: 50  # Maximum allowed medium severity findings
+
+# General Settings
+scan_target: .  # Directory to scan
+verbose: false  # Verbose output
+log_level: INFO  # DEBUG, INFO, WARNING, ERROR, CRITICAL
+log_file: null  # Path to log file (null = stdout only)

@@ -129,7 +129,6 @@ class ModelTrainer:
         model = LogisticRegression(
             random_state=self.random_state,
             max_iter=1000,
-            multi_class='multinomial',
         )
         
         model.fit(X_train, y_train_class)

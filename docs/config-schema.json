@@ -1,0 +1,465 @@
+{
+  "$defs": {
+    "BanditConfig": {
+      "additionalProperties": false,
+      "description": "Bandit scanner configuration.",
+      "properties": {
+        "enabled": {
+          "default": true,
+          "title": "Enabled",
+          "type": "boolean"
+        },
+        "config_file": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Config File"
+        },
+        "extra_args": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Extra Args",
+          "type": "array"
+        },
+        "timeout": {
+          "default": 300,
+          "maximum": 3600,
+          "minimum": 1,
+          "title": "Timeout",
+          "type": "integer"
+        },
+        "severity_level": {
+          "default": "low",
+          "pattern": "^(low|medium|high)$",
+          "title": "Severity Level",
+          "type": "string"
+        },
+        "confidence_level": {
+          "default": "low",
+          "pattern": "^(low|medium|high)$",
+          "title": "Confidence Level",
+          "type": "string"
+        },
+        "exclude_dirs": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Exclude Dirs",
+          "type": "array"
+        },
+        "skip_tests": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Skip Tests",
+          "type": "array"
+        }
+      },
+      "title": "BanditConfig",
+      "type": "object"
+    },
+    "DeduplicationStrategy": {
+      "description": "Deduplication strategies.",
+      "enum": [
+        "location",
+        "content",
+        "both"
+      ],
+      "title": "DeduplicationStrategy",
+      "type": "string"
+    },
+    "GitLabConfig": {
+      "additionalProperties": false,
+      "description": "GitLab integration configuration.",
+      "properties": {
+        "enabled": {
+          "default": false,
+          "title": "Enabled",
+          "type": "boolean"
+        },
+        "url": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Url"
+        },
+        "token": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Token"
+        },
+        "project_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Project Id"
+        },
+        "create_issues": {
+          "default": false,
+          "title": "Create Issues",
+          "type": "boolean"
+        },
+        "priority_threshold": {
+          "default": 70,
+          "maximum": 100,
+          "minimum": 0,
+          "title": "Priority Threshold",
+          "type": "integer"
+        },
+        "max_issues": {
+          "default": 10,
+          "maximum": 100,
+          "minimum": 1,
+          "title": "Max Issues",
+          "type": "integer"
+        },
+        "issue_labels": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Issue Labels",
+          "type": "array"
+        },
+        "assignee_ids": {
+          "items": {
+            "type": "integer"
+          },
+          "title": "Assignee Ids",
+          "type": "array"
+        }
+      },
+      "title": "GitLabConfig",
+      "type": "object"
+    },
+    "OrchestratorConfig": {
+      "additionalProperties": false,
+      "description": "Orchestrator configuration.",
+      "properties": {
+        "deduplication_strategy": {
+          "$ref": "#/$defs/DeduplicationStrategy",
+          "default": "both"
+        },
+        "max_workers": {
+          "default": 3,
+          "maximum": 16,
+          "minimum": 1,
+          "title": "Max Workers",
+          "type": "integer"
+        },
+        "parallel_execution": {
+          "default": true,
+          "title": "Parallel Execution",
+          "type": "boolean"
+        },
+        "continue_on_error": {
+          "default": true,
+          "title": "Continue On Error",
+          "type": "boolean"
+        }
+      },
+      "title": "OrchestratorConfig",
+      "type": "object"
+    },
+    "ReportConfig": {
+      "additionalProperties": false,
+      "description": "Report generation configuration.",
+      "properties": {
+        "formats": {
+          "items": {
+            "$ref": "#/$defs/ReportFormat"
+          },
+          "title": "Formats",
+          "type": "array"
+        },
+        "output_dir": {
+          "default": "security-reports",
+          "minLength": 1,
+          "title": "Output Dir",
+          "type": "string"
+        },
+        "include_code_snippets": {
+          "default": true,
+          "title": "Include Code Snippets",
+          "type": "boolean"
+        },
+        "max_snippet_lines": {
+          "default": 10,
+          "maximum": 100,
+          "minimum": 1,
+          "title": "Max Snippet Lines",
+          "type": "integer"
+        },
+        "group_by": {
+          "default": "severity",
+          "pattern": "^(severity|scanner|file)$",
+          "title": "Group By",
+          "type": "string"
+        }
+      },
+      "title": "ReportConfig",
+      "type": "object"
+    },
+    "ReportFormat": {
+      "description": "Report output formats.",
+      "enum": [
+        "json",
+        "html",
+        "markdown",
+        "sarif",
+        "text"
+      ],
+      "title": "ReportFormat",
+      "type": "string"
+    },
+    "SemgrepConfig": {
+      "additionalProperties": false,
+      "description": "Semgrep scanner configuration.",
+      "properties": {
+        "enabled": {
+          "default": true,
+          "title": "Enabled",
+          "type": "boolean"
+        },
+        "config_file": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Config File"
+        },
+        "extra_args": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Extra Args",
+          "type": "array"
+        },
+        "timeout": {
+          "default": 300,
+          "maximum": 3600,
+          "minimum": 1,
+          "title": "Timeout",
+          "type": "integer"
+        },
+        "rules": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Rules",
+          "type": "array"
+        },
+        "exclude_rules": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Exclude Rules",
+          "type": "array"
+        },
+        "max_memory": {
+          "default": 5000,
+          "maximum": 50000,
+          "minimum": 100,
+          "title": "Max Memory",
+          "type": "integer"
+        },
+        "max_target_bytes": {
+          "default": 1000000,
+          "minimum": 1000,
+          "title": "Max Target Bytes",
+          "type": "integer"
+        }
+      },
+      "title": "SemgrepConfig",
+      "type": "object"
+    },
+    "ThresholdConfig": {
+      "additionalProperties": false,
+      "description": "Severity threshold configuration.",
+      "properties": {
+        "fail_on_critical": {
+          "default": true,
+          "title": "Fail On Critical",
+          "type": "boolean"
+        },
+        "fail_on_high": {
+          "default": false,
+          "title": "Fail On High",
+          "type": "boolean"
+        },
+        "fail_on_medium": {
+          "default": false,
+          "title": "Fail On Medium",
+          "type": "boolean"
+        },
+        "max_critical": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Max Critical",
+          "type": "integer"
+        },
+        "max_high": {
+          "default": 10,
+          "minimum": 0,
+          "title": "Max High",
+          "type": "integer"
+        },
+        "max_medium": {
+          "default": 50,
+          "minimum": 0,
+          "title": "Max Medium",
+          "type": "integer"
+        }
+      },
+      "title": "ThresholdConfig",
+      "type": "object"
+    },
+    "TrivyConfig": {
+      "additionalProperties": false,
+      "description": "Trivy scanner configuration.",
+      "properties": {
+        "enabled": {
+          "default": true,
+          "title": "Enabled",
+          "type": "boolean"
+        },
+        "config_file": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Config File"
+        },
+        "extra_args": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Extra Args",
+          "type": "array"
+        },
+        "timeout": {
+          "default": 300,
+          "maximum": 3600,
+          "minimum": 1,
+          "title": "Timeout",
+          "type": "integer"
+        },
+        "severity": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Severity",
+          "type": "array"
+        },
+        "scanners": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Scanners",
+          "type": "array"
+        },
+        "skip_dirs": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Skip Dirs",
+          "type": "array"
+        }
+      },
+      "title": "TrivyConfig",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Main configuration for Security Assistant.",
+  "properties": {
+    "bandit": {
+      "$ref": "#/$defs/BanditConfig"
+    },
+    "semgrep": {
+      "$ref": "#/$defs/SemgrepConfig"
+    },
+    "trivy": {
+      "$ref": "#/$defs/TrivyConfig"
+    },
+    "orchestrator": {
+      "$ref": "#/$defs/OrchestratorConfig"
+    },
+    "report": {
+      "$ref": "#/$defs/ReportConfig"
+    },
+    "gitlab": {
+      "$ref": "#/$defs/GitLabConfig"
+    },
+    "thresholds": {
+      "$ref": "#/$defs/ThresholdConfig"
+    },
+    "scan_target": {
+      "default": ".",
+      "minLength": 1,
+      "title": "Scan Target",
+      "type": "string"
+    },
+    "verbose": {
+      "default": false,
+      "title": "Verbose",
+      "type": "boolean"
+    },
+    "log_level": {
+      "default": "INFO",
+      "pattern": "^(DEBUG|INFO|WARNING|ERROR|CRITICAL)$",
+      "title": "Log Level",
+      "type": "string"
+    },
+    "log_file": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Log File"
+    }
+  },
+  "title": "Security Assistant Configuration",
+  "type": "object",
+  "$id": "https://github.com/security-assistant/config-schema.json"
+}

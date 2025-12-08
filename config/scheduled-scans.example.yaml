@@ -1,0 +1,214 @@
+# Scheduled Security Scans Configuration
+# 
+# This file defines automated security scan schedules.
+# Each schedule runs on a cron-based schedule and can be configured
+# with different scanners, targets, and notification settings.
+
+# Global settings
+global:
+  # Default timezone for all schedules (can be overridden per schedule)
+  timezone: "UTC"
+  
+  # Maximum number of concurrent scan jobs
+  max_workers: 3
+  
+  # Default notification settings
+  notifications:
+    # SMTP settings for email notifications
+    smtp:
+      host: "smtp.gmail.com"
+      port: 587
+      use_tls: true
+      username: "${SMTP_USERNAME}"  # Use environment variable
+      password: "${SMTP_PASSWORD}"  # Use environment variable
+      from: "security@example.com"
+    
+    # Default webhook settings
+    webhook:
+      timeout: 30
+      retry_count: 3
+
+# Scan schedules
+schedules:
+  # Daily quick scan - runs every day at 2 AM
+  - name: "daily_quick_scan"
+    enabled: true
+    cron: "0 2 * * *"  # 2 AM daily
+    timezone: "UTC"
+    target: "security_assistant/"
+    scanners:
+      - bandit
+      - semgrep
+    min_severity: "MEDIUM"
+    notifications:
+      email:
+        - security@example.com
+      on_failure: true
+      on_new_critical: true
+      on_new_high: true
+    metadata:
+      description: "Daily quick scan of main codebase"
+      owner: "Security Team"
+  
+  # Weekly full scan - runs every Sunday at 3 AM
+  - name: "weekly_full_scan"
+    enabled: true
+    cron: "0 3 * * 0"  # Sunday 3 AM
+    timezone: "UTC"
+    target: "."
+    scanners:
+      - bandit
+      - semgrep
+      - trivy
+    min_severity: "LOW"
+    notifications:
+      email:
+        - security@example.com
+        - devops@example.com
+      webhook:
+        - "${SLACK_WEBHOOK_URL}"  # Use environment variable
+      on_failure: true
+      on_completion: true
+      on_new_critical: true
+      on_new_high: true
+    metadata:
+      description: "Weekly comprehensive security scan"
+      owner: "Security Team"
+      sla: "24 hours"
+  
+  # Hourly critical scan - runs every hour
+  - name: "hourly_critical_scan"
+    enabled: false  # Disabled by default
+    cron: "0 * * * *"  # Every hour
+    timezone: "UTC"
+    target: "security_assistant/"
+    scanners:
+      - bandit
+    min_severity: "CRITICAL"
+    notifications:
+      email:
+        - security@example.com
+      webhook:
+        - "${SLACK_WEBHOOK_URL}"
+      on_new_critical: true
+    metadata:
+      description: "Hourly scan for critical vulnerabilities only"
+      owner: "Security Team"
+  
+  # Pre-deployment scan - runs every weekday at 6 PM
+  - name: "pre_deployment_scan"
+    enabled: true
+    cron: "0 18 * * 1-5"  # Weekdays 6 PM
+    timezone: "America/New_York"
+    target: "security_assistant/"
+    scanners:
+      - bandit
+      - semgrep
+    min_severity: "HIGH"
+    notifications:
+      email:
+        - devops@example.com
+      on_failure: true
+      on_new_critical: true
+      on_new_high: true
+    metadata:
+      description: "Pre-deployment security check"
+      owner: "DevOps Team"
+      environment: "staging"
+  
+  # Monthly compliance scan - runs first day of month at 4 AM
+  - name: "monthly_compliance_scan"
+    enabled: true
+    cron: "0 4 1 * *"  # First day of month, 4 AM
+    timezone: "UTC"
+    target: "."
+    scanners:
+      - bandit
+      - semgrep
+      - trivy
+    min_severity: "LOW"
+    notifications:
+      email:
+        - security@example.com
+        - compliance@example.com
+      on_completion: true
+    metadata:
+      description: "Monthly compliance and security audit"
+      owner: "Compliance Team"
+      report_type: "compliance"
+
+# Notification templates (optional)
+notification_templates:
+  email:
+    subject: "[Security Scan] {schedule_name} - {status}"
+    body: |
+      Security Scan Report
+      
+      Schedule: {schedule_name}
+      Status: {status}
+      Target: {target}
+      Scanners: {scanners}
+      
+      Findings:
+      - Critical: {critical_count}
+      - High: {high_count}
+      - Medium: {medium_count}
+      - Low: {low_count}
+      
+      Total: {total_findings}
+      
+      Report: {report_url}
+      
+      Scan completed at: {scan_time}
+  
+  webhook:
+    payload:
+      text: "Security scan {schedule_name} completed with {total_findings} findings"
+      status: "{status}"
+      findings:
+        critical: "{critical_count}"
+        high: "{high_count}"
+        medium: "{medium_count}"
+        low: "{low_count}"
+
+# Report settings
+reports:
+  # Directory for storing reports
+  output_dir: "reports/scheduled"
+  
+  # Report formats to generate
+  formats:
+    - html
+    - json
+    - sarif
+  
+  # Report retention (days)
+  retention_days: 90
+  
+  # Include charts in HTML reports
+  include_charts: true
+  
+  # Include code snippets in reports
+  include_code_snippets: true
+
+# Advanced settings
+advanced:
+  # Retry failed scans
+  retry_on_failure: true
+  retry_count: 3
+  retry_delay: 300  # seconds
+  
+  # Scan timeout (seconds)
+  scan_timeout: 3600  # 1 hour
+  
+  # Enable scan result comparison
+  enable_comparison: true
+  
+  # Store scan history
+  store_history: true
+  history_retention_days: 365
+  
+  # Enable notifications rate limiting
+  notification_rate_limit:
+    enabled: true
+    max_per_hour: 10

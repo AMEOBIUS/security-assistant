@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Security Dashboard</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100">
+    <div id="app" class="container mx-auto p-8">
+        <header class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-800">Security Dashboard</h1>
+            <p class="text-gray-600">Real-time security insights</p>
+        </header>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white p-6 rounded-lg shadow-md">
+                <h3 class="text-gray-500 text-sm font-medium uppercase">Total Scans</h3>
+                <p class="text-3xl font-bold text-indigo-600">{{ scans.length }}</p>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow-md">
+                <h3 class="text-gray-500 text-sm font-medium uppercase">Latest Findings</h3>
+                <p class="text-3xl font-bold text-red-600">{{ latestFindings }}</p>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow-md">
+                <h3 class="text-gray-500 text-sm font-medium uppercase">Status</h3>
+                <p class="text-3xl font-bold text-green-600">Active</p>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow-md">
+                <h3 class="text-gray-500 text-sm font-medium uppercase">Version</h3>
+                <p class="text-3xl font-bold text-gray-600">1.3.0</p>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-md overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h2 class="text-lg font-medium text-gray-900">Scan History</h2>
+            </div>
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Target</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Findings</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    <tr v-for="scan in scans" :key="scan.id">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ scan.date }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ scan.target }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            <span :class="scan.total_findings > 0 ? 'text-red-600 font-bold' : 'text-green-600'">
+                                {{ scan.total_findings }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <a href="#" @click.prevent="viewScan(scan.id)" class="text-indigo-600 hover:text-indigo-900">View Report</a>
+                        </td>
+                    </tr>
+                    <tr v-if="scans.length === 0">
+                        <td colspan="4" class="px-6 py-4 text-center text-gray-500">
+                            No scans found. Run a scan to see results here.
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Scan Details Modal -->
+        <div v-if="selectedScan" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" @click.self="selectedScan = null">
+            <div class="relative top-20 mx-auto p-5 border w-11/12 shadow-lg rounded-md bg-white">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-bold">Scan Details: {{ selectedScan.target }} ({{ selectedScan.date }})</h3>
+                    <button @click="selectedScan = null" class="text-gray-500 hover:text-gray-700">
+                        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Summary Stats -->
+                <div class="grid grid-cols-4 gap-4 mb-6">
+                    <div class="bg-red-50 p-4 rounded">
+                        <div class="text-sm text-red-600 font-bold">Critical</div>
+                        <div class="text-2xl">{{ findingsCounts.critical }}</div>
+                    </div>
+                    <div class="bg-orange-50 p-4 rounded">
+                        <div class="text-sm text-orange-600 font-bold">High</div>
+                        <div class="text-2xl">{{ findingsCounts.high }}</div>
+                    </div>
+                    <div class="bg-yellow-50 p-4 rounded">
+                        <div class="text-sm text-yellow-600 font-bold">Medium</div>
+                        <div class="text-2xl">{{ findingsCounts.medium }}</div>
+                    </div>
+                    <div class="bg-blue-50 p-4 rounded">
+                        <div class="text-sm text-blue-600 font-bold">KEV Exploits</div>
+                        <div class="text-2xl">{{ findingsCounts.kev }}</div>
+                    </div>
+                </div>
+
+                <!-- Findings Table -->
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Severity</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Finding</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Location</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Enrichment</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            <tr v-for="finding in selectedScan.findings" :key="finding.finding_id">
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span :class="getSeverityClass(finding.severity)">
+                                        {{ finding.severity }}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <div class="text-sm font-medium text-gray-900">{{ finding.title }}</div>
+                                    <div class="text-xs text-gray-500">{{ finding.category }} ({{ finding.scanner }})</div>
+                                </td>
+                                <td class="px-6 py-4 text-sm text-gray-500">
+                                    <div>{{ finding.file_path }}</div>
+                                    <div class="text-xs">Lines {{ finding.line_start }}-{{ finding.line_end }}</div>
+                                </td>
+                                <td class="px-6 py-4 text-sm">
+                                    <div class="flex flex-wrap gap-1">
+                                        <span v-if="finding.is_active_exploit" class="px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800" title="Known Exploited Vulnerability">
+                                            KEV 🚨
+                                        </span>
+                                        <span v-if="finding.epss_score" class="px-2 py-1 text-xs font-semibold rounded-full bg-purple-100 text-purple-800" title="Exploit Prediction Score">
+                                            EPSS: {{ (finding.epss_score * 100).toFixed(1) }}%
+                                        </span>
+                                        <span v-if="finding.is_reachable === false" class="px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800" title="Code is not reachable">
+                                            Unreachable 👻
+                                        </span>
+                                        <span v-if="finding.is_false_positive" class="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800" title="Likely False Positive">
+                                            False Positive ✅
+                                        </span>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const { createApp, ref, onMounted, computed } = Vue
+
+        createApp({
+            setup() {
+                const scans = ref([])
+                const selectedScan = ref(null)
+                
+                const latestFindings = computed(() => {
+                    if (scans.value.length > 0) {
+                        return scans.value[0].total_findings
+                    }
+                    return 0
+                })
+
+                const findingsCounts = computed(() => {
+                    if (!selectedScan.value || !selectedScan.value.findings) return { critical: 0, high: 0, medium: 0, kev: 0 }
+                    
+                    return {
+                        critical: selectedScan.value.findings.filter(f => f.severity === 'CRITICAL').length,
+                        high: selectedScan.value.findings.filter(f => f.severity === 'HIGH').length,
+                        medium: selectedScan.value.findings.filter(f => f.severity === 'MEDIUM').length,
+                        kev: selectedScan.value.findings.filter(f => f.is_active_exploit).length
+                    }
+                })
+
+                const fetchScans = async () => {
+                    try {
+                        const response = await fetch('http://localhost:8000/api/v1/scans')
+                        if (response.ok) {
+                            scans.value = await response.json()
+                        }
+                    } catch (error) {
+                        console.error('Error fetching scans:', error)
+                        // Mock data
+                        if (scans.value.length === 0) {
+                            scans.value = [
+                                { id: 'latest', date: '2025-12-07 12:00:00', target: 'src/', total_findings: 5 }
+                            ]
+                        }
+                    }
+                }
+
+                const viewScan = async (scanId) => {
+                    try {
+                        const response = await fetch(`http://localhost:8000/api/v1/scans/${scanId}`)
+                        if (response.ok) {
+                            const data = await response.json()
+                            selectedScan.value = {
+                                ...data.metadata,
+                                findings: data.findings || []
+                            }
+                        } else {
+                            // Mock findings for demo if backend fails or is empty
+                            selectedScan.value = {
+                                date: '2025-12-07 12:00:00',
+                                target: 'src/',
+                                findings: [
+                                    {
+                                        finding_id: '1',
+                                        severity: 'CRITICAL',
+                                        title: 'Log4Shell',
+                                        category: 'vulnerability',
+                                        scanner: 'trivy',
+                                        file_path: 'pom.xml',
+                                        line_start: 10,
+                                        line_end: 10,
+                                        is_active_exploit: true,
+                                        epss_score: 0.95
+                                    },
+                                    {
+                                        finding_id: '2',
+                                        severity: 'HIGH',
+                                        title: 'SQL Injection',
+                                        category: 'sast',
+                                        scanner: 'bandit',
+                                        file_path: 'app.py',
+                                        line_start: 42,
+                                        line_end: 45,
+                                        is_active_exploit: false,
+                                        is_reachable: true
+                                    },
+                                    {
+                                        finding_id: '3',
+                                        severity: 'MEDIUM',
+                                        title: 'Unused Dependency',
+                                        category: 'sca',
+                                        scanner: 'trivy',
+                                        file_path: 'requirements.txt',
+                                        line_start: 1,
+                                        line_end: 1,
+                                        is_reachable: false
+                                    },
+                                    {
+                                        finding_id: '4',
+                                        severity: 'LOW',
+                                        title: 'Test Assert',
+                                        category: 'sast',
+                                        scanner: 'bandit',
+                                        file_path: 'tests/test_app.py',
+                                        line_start: 15,
+                                        line_end: 15,
+                                        is_false_positive: true
+                                    }
+                                ]
+                            }
+                        }
+                    } catch (error) {
+                        console.error('Error fetching scan details:', error)
+                    }
+                }
+
+                const getSeverityClass = (severity) => {
+                    const classes = {
+                        'CRITICAL': 'px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800',
+                        'HIGH': 'px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-orange-100 text-orange-800',
+                        'MEDIUM': 'px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800',
+                        'LOW': 'px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800',
+                        'INFO': 'px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800'
+                    }
+                    return classes[severity] || classes['INFO']
+                }
+
+                onMounted(() => {
+                    fetchScans()
+                })
+
+                return {
+                    scans,
+                    latestFindings,
+                    selectedScan,
+                    findingsCounts,
+                    viewScan,
+                    getSeverityClass
+                }
+            }
+        }).mount('#app')
+    </script>
+</body>
+</html>

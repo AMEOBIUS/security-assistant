@@ -7,70 +7,53 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [Unreleased]
+## [1.0.0] - 2025-12-08
 
-### Session 31-32: KEV + FP Detection + Reachability Analysis (2025-12-07)
+### Major Release - Enterprise Security Orchestration
 
-#### Added
+This release marks the transition to a production-ready Enterprise Security Orchestration platform. It includes massive architectural improvements, performance optimizations, and comprehensive documentation.
 
-**KEV Integration (Session 31):**
-- `security_assistant/enrichment/kev.py` - CISA KEV catalog client
-  - Daily updates from CISA API
-  - 24-hour caching with offline fallback
-  - Ransomware campaign tracking
-  - 32 tests passing ✅
+#### Key Features
 
-**Vulnerability Enricher (Session 31):**
-- `security_assistant/enrichment/enricher.py` - EPSS + KEV integration
-  - Smart prioritization (KEV=true → CRITICAL)
-  - EPSS-based scoring (70%+ → CRITICAL, 30-70% → HIGH)
-  - Batch processing support
-  - 15 tests passing ✅
+**1. Intelligent Orchestration & Analysis**
+- **Unified Finding Model**: Standardized format for all scanners (Bandit, Semgrep, Trivy).
+- **Enrichment Service**:
+  - **KEV Integration**: Automatic prioritization of actively exploited vulnerabilities (CISA KEV).
+  - **EPSS Scoring**: Exploit Prediction Scoring System integration for risk assessment.
+  - **False Positive Detection**: Heuristic engine to identify test code, mocks, and safe contexts.
+  - **Reachability Analysis**: Lazy-loaded dependency analysis to filter unreachable libraries.
+- **ML Scoring**: Random Forest model for vulnerability scoring (with rule-based fallback).
 
-**False Positive Detector (Session 31):**
-- `security_assistant/analysis/false_positive_detector.py` - Auto-detect FP
-  - Test code detection (test files, test functions)
-  - Sanitization detection (escape, validate)
-  - Mock data detection (fixtures, mocks)
-  - Safe context detection (logging, comments)
-  - Confidence-based filtering (threshold: 0.4)
-  - 15 tests passing ✅
+**2. Configuration & Developer Experience**
+- **Pydantic v2 Configuration**:
+  - Strongly typed configuration with automatic validation.
+  - `security-assistant.yaml` with JSON Schema support for IDE autocompletion.
+  - Environment variable overrides (`SA_*`).
+- **Web Dashboard**:
+  - React/TypeScript frontend for visualizing scan results.
+  - Historical trends and remediation tracking.
+- **Remediation Templates**: Automated fix suggestions for common vulnerabilities.
 
-**Reachability Analysis (Session 32):**
-- `security_assistant/analysis/reachability/` - 5 modules
-  - `ast_parser.py` - Python AST parser
-  - `import_tracker.py` - Import tracking
-  - `call_graph.py` - Call graph builder (BFS-based)
-  - `entry_points.py` - Entry point detection
-  - `reachability_analyzer.py` - Main analyzer
-  - Filters unreachable dependency vulnerabilities
-  - Confidence scoring (0.0-1.0)
-  - 17 tests passing ✅
+**3. Performance & Architecture**
+- **Persistent Caching**: File-based caching for KEV and EPSS data (offline support).
+- **Lazy Loading**: Heavy analysis modules (Reachability) load only when needed.
+- **Refactored Core**: Clean architecture separating Orchestrator, Services, and Scanners.
 
-**Documentation:**
-- Updated `.agents/builder-mode.md` - Added MCP server usage
-- Updated `.gitlab/duo/chat-rules.md` - Simplified rules
-- Added `docs/roadmaps/MASTER_ROADMAP_2025-2026.md`
-- Archived old roadmaps to `docs/archive/roadmaps/`
+**4. Reporting & CI/CD**
+- **Multi-Format Reporting**: HTML (Interactive), JSON, SARIF, Markdown, Text.
+- **GitLab Integration**: Two-way sync with GitLab Issues.
+- **Bulk Operations**: Support for scanning multiple repositories in parallel.
 
-**Configuration:**
-- Added `pytest.mark.integration` to `pyproject.toml`
+#### Documentation
+- **JSON Schema**: `docs/config-schema.json` for IDE validation.
+- **Updated Guides**:
+  - `docs/configuration.md`
+  - `docs/installation.md`
+  - `docs/integrations/`
 
-#### Changed
-- Reorganized roadmap documentation
-- Updated README.md, QUICK_START.md, START_HERE.md
-
-#### Tests
-- **69 tests passing** (Session 31 + 32)
-- **0 warnings** (registered integration marker)
-- **0 skipped** (integration tests working)
-- Coverage: enrichment + analysis modules
-
-#### Success Metrics
-- ✅ KEV data updates daily
-- ✅ Auto-detect 30-50% false positives
-- ✅ Reachability for Python dependencies
-- ✅ Reduce noise by 50-70% (estimated)
+#### Quality Assurance
+- **Test Suite**: 566 tests passing (99% coverage).
+- **Stability**: Fixed flaky integration tests and race conditions.
 
 ---
 

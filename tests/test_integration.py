@@ -1,7 +1,7 @@
 """
 Integration tests for GitLab API.
 These tests require a real GitLab token and project.
-Set GITLAB_TOKEN and GITLAB_TEST_PROJECT environment variables to run.
+Set GITLAB_PERSONAL_TOKEN (or GITLAB_TOKEN) and GITLAB_TEST_PROJECT environment variables to run.
 """
 
 import os
@@ -13,7 +13,7 @@ from security_assistant.gitlab_api import GitLabAPI, IssueData
 
 # Skip integration tests if credentials not provided
 pytestmark = pytest.mark.skipif(
-    not os.getenv("GITLAB_TOKEN") or not os.getenv("GITLAB_TEST_PROJECT"),
+    not (os.getenv("GITLAB_TOKEN") or os.getenv("GITLAB_PERSONAL_TOKEN")) or not os.getenv("GITLAB_TEST_PROJECT"),
     reason="Integration tests require GITLAB_TOKEN and GITLAB_TEST_PROJECT"
 )
 

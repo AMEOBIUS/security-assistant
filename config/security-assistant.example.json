@@ -1,0 +1,97 @@
+{
+  "bandit": {
+    "enabled": true,
+    "severity_level": "low",
+    "confidence_level": "low",
+    "exclude_dirs": [
+      "tests",
+      "test",
+      ".git",
+      ".venv",
+      "venv",
+      "node_modules"
+    ],
+    "skip_tests": [],
+    "config_file": null,
+    "extra_args": [],
+    "timeout": 300
+  },
+  "semgrep": {
+    "enabled": true,
+    "rules": [
+      "auto"
+    ],
+    "exclude_rules": [],
+    "max_memory": 5000,
+    "max_target_bytes": 1000000,
+    "config_file": null,
+    "extra_args": [],
+    "timeout": 300
+  },
+  "trivy": {
+    "enabled": true,
+    "severity": [
+      "CRITICAL",
+      "HIGH",
+      "MEDIUM",
+      "LOW"
+    ],
+    "scanners": [
+      "vuln",
+      "secret",
+      "config"
+    ],
+    "skip_dirs": [
+      ".git",
+      ".venv",
+      "venv",
+      "node_modules"
+    ],
+    "config_file": null,
+    "extra_args": [],
+    "timeout": 300
+  },
+  "orchestrator": {
+    "deduplication_strategy": "both",
+    "max_workers": 3,
+    "parallel_execution": true,
+    "continue_on_error": true
+  },
+  "report": {
+    "formats": [
+      "json",
+      "html",
+      "markdown"
+    ],
+    "output_dir": "security-reports",
+    "include_code_snippets": true,
+    "max_snippet_lines": 10,
+    "group_by": "severity"
+  },
+  "gitlab": {
+    "enabled": false,
+    "url": "https://gitlab.com",
+    "token": null,
+    "project_id": null,
+    "create_issues": false,
+    "priority_threshold": 70,
+    "max_issues": 10,
+    "issue_labels": [
+      "security",
+      "automated"
+    ],
+    "assignee_ids": []
+  },
+  "thresholds": {
+    "fail_on_critical": true,
+    "fail_on_high": false,
+    "fail_on_medium": false,
+    "max_critical": 0,
+    "max_high": 10,
+    "max_medium": 50
+  },
+  "scan_target": ".",
+  "verbose": false,
+  "log_level": "INFO",
+  "log_file": null
+}

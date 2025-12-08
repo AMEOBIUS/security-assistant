@@ -139,32 +139,30 @@ def mock_semgrep_output():
 class TestSemgrepIntegration:
     """Integration tests for Semgrep scanner."""
     
-    @patch('security_assistant.scanners.semgrep_scanner.subprocess.run')
-    @patch('os.path.exists')
-    @patch('os.path.isdir')
+    @patch('security_assistant.scanners.base_scanner.subprocess.run')
+    @patch('security_assistant.scanners.base_scanner.shutil.which')
+    @patch('pathlib.Path.is_dir')
+    @patch('pathlib.Path.exists')
     def test_scan_and_create_issues_workflow(
         self,
-        mock_isdir,
         mock_exists,
+        mock_is_dir,
+        mock_which,
         mock_run,
         mock_semgrep_output
     ):
         """Test complete workflow: scan → create issues."""
-        # Mock directory existence
+        # Mock installation and directory existence
+        mock_which.return_value = "/usr/bin/semgrep"
         mock_exists.return_value = True
-        mock_isdir.return_value = True
-        
-        # Mock Semgrep version check
-        version_result = Mock(returncode=0, stdout="1.144.0")
+        mock_is_dir.return_value = True
         
         # Mock Semgrep scan
-        scan_result = Mock(
+        mock_run.return_value = Mock(
             returncode=1,
             stdout=json.dumps(mock_semgrep_output),
             stderr=""
         )
-        
-        mock_run.side_effect = [version_result, scan_result]
         
         # Initialize scanner
         scanner = SemgrepScanner(min_severity="WARNING", config="p/security-audit")
@@ -197,28 +195,28 @@ class TestSemgrepIntegration:
         assert len(js_issues) == 1
         assert len(go_issues) == 1
     
-    @patch('security_assistant.scanners.semgrep_scanner.subprocess.run')
-    @patch('os.path.exists')
-    @patch('os.path.isdir')
+    @patch('security_assistant.scanners.base_scanner.subprocess.run')
+    @patch('security_assistant.scanners.base_scanner.shutil.which')
+    @patch('pathlib.Path.is_dir')
+    @patch('pathlib.Path.exists')
     def test_grouped_issues_workflow(
         self,
-        mock_isdir,
         mock_exists,
+        mock_is_dir,
+        mock_which,
         mock_run,
         mock_semgrep_output
     ):
         """Test workflow with grouped issues (one per file)."""
+        mock_which.return_value = "/usr/bin/semgrep"
         mock_exists.return_value = True
-        mock_isdir.return_value = True
+        mock_is_dir.return_value = True
         
-        version_result = Mock(returncode=0)
-        scan_result = Mock(
+        mock_run.return_value = Mock(
             returncode=1,
             stdout=json.dumps(mock_semgrep_output),
             stderr=""
         )
-        
-        mock_run.side_effect = [version_result, scan_result]
         
         scanner = SemgrepScanner()
         result = scanner.scan_directory("src/")
@@ -235,30 +233,30 @@ class TestSemgrepIntegration:
             assert "issues in" in issue.title
             assert "multiple-issues" in issue.labels
     
-    @patch('security_assistant.scanners.semgrep_scanner.subprocess.run')
-    @patch('os.path.exists')
-    @patch('os.path.isdir')
+    @patch('security_assistant.scanners.base_scanner.subprocess.run')
+    @patch('security_assistant.scanners.base_scanner.shutil.which')
+    @patch('pathlib.Path.is_dir')
+    @patch('pathlib.Path.exists')
     @patch('security_assistant.gitlab_api.GitLabAPI.create_issue')
     def test_full_integration_with_gitlab(
         self,
         mock_create_issue,
-        mock_isdir,
         mock_exists,
+        mock_is_dir,
+        mock_which,
         mock_run,
         mock_semgrep_output
     ):
         """Test full integration: scan → create GitLab issues."""
+        mock_which.return_value = "/usr/bin/semgrep"
         mock_exists.return_value = True
-        mock_isdir.return_value = True
+        mock_is_dir.return_value = True
         
-        version_result = Mock(returncode=0)
-        scan_result = Mock(
+        mock_run.return_value = Mock(
             returncode=1,
             stdout=json.dumps(mock_semgrep_output),
             stderr=""
         )
-        
-        mock_run.side_effect = [version_result, scan_result]
         
         # Mock GitLab API
         mock_create_issue.return_value = {
@@ -289,28 +287,28 @@ class TestSemgrepIntegration:
         assert len(created_issues) == 2  # Only ERROR severity
         assert mock_create_issue.call_count == 2
     
-    @patch('security_assistant.scanners.semgrep_scanner.subprocess.run')
-    @patch('os.path.exists')
-    @patch('os.path.isfile')
+    @patch('security_assistant.scanners.base_scanner.subprocess.run')
+    @patch('security_assistant.scanners.base_scanner.shutil.which')
+    @patch('pathlib.Path.is_file')
+    @patch('pathlib.Path.exists')
     def test_multi_language_detection(
         self,
-        mock_isfile,
         mock_exists,
+        mock_is_file,
+        mock_which,
         mock_run,
         mock_semgrep_output
     ):
         """Test detection of multiple languages."""
+        mock_which.return_value = "/usr/bin/semgrep"
         mock_exists.return_value = True
-        mock_isfile.return_value = True
+        mock_is_file.return_value = True
         
-        version_result = Mock(returncode=0)
-        scan_result = Mock(
+        mock_run.return_value = Mock(
             returncode=1,
             stdout=json.dumps(mock_semgrep_output),
             stderr=""
         )
-        
-        mock_run.side_effect = [version_result, scan_result]
         
         scanner = SemgrepScanner()
         result = scanner.scan_file("app.py")
@@ -329,28 +327,28 @@ class TestSemgrepIntegration:
         assert len(js_findings) == 1
         assert len(go_findings) == 1
     
-    @patch('security_assistant.scanners.semgrep_scanner.subprocess.run')
-    @patch('os.path.exists')
-    @patch('os.path.isdir')
+    @patch('security_assistant.scanners.base_scanner.subprocess.run')
+    @patch('security_assistant.scanners.base_scanner.shutil.which')
+    @patch('pathlib.Path.is_dir')
+    @patch('pathlib.Path.exists')
     def test_issue_description_formatting(
         self,
-        mock_isdir,
         mock_exists,
+        mock_is_dir,
+        mock_which,
         mock_run,
         mock_semgrep_output
     ):
         """Test issue description formatting."""
+        mock_which.return_value = "/usr/bin/semgrep"
         mock_exists.return_value = True
-        mock_isdir.return_value = True
+        mock_is_dir.return_value = True
         
-        version_result = Mock(returncode=0)
-        scan_result = Mock(
+        mock_run.return_value = Mock(
             returncode=1,
             stdout=json.dumps(mock_semgrep_output),
             stderr=""
         )
-        
-        mock_run.side_effect = [version_result, scan_result]
         
         scanner = SemgrepScanner()
         result = scanner.scan_directory("src/")
@@ -373,11 +371,10 @@ class TestSemgrepIntegration:
         # Verify code block formatting
         assert "```python" in issue.description or "```javascript" in issue.description or "```go" in issue.description
     
-    @patch('security_assistant.scanners.semgrep_scanner.subprocess.run')
-    def test_custom_config_usage(self, mock_run):
+    @patch('security_assistant.scanners.base_scanner.shutil.which')
+    def test_custom_config_usage(self, mock_which):
         """Test using custom Semgrep config."""
-        version_result = Mock(returncode=0)
-        mock_run.return_value = version_result
+        mock_which.return_value = "/usr/bin/semgrep"
         
         # Test different configs
         configs = [
@@ -390,22 +387,23 @@ class TestSemgrepIntegration:
         
         for config in configs:
             scanner = SemgrepScanner(config=config)
-            assert scanner.config == config
+            assert scanner.semgrep_config == config
     
-    @patch('security_assistant.scanners.semgrep_scanner.subprocess.run')
-    @patch('os.path.exists')
-    @patch('os.path.isdir')
+    @patch('security_assistant.scanners.base_scanner.subprocess.run')
+    @patch('security_assistant.scanners.base_scanner.shutil.which')
+    @patch('pathlib.Path.is_dir')
+    @patch('pathlib.Path.exists')
     def test_error_handling_in_scan(
         self,
-        mock_isdir,
         mock_exists,
+        mock_is_dir,
+        mock_which,
         mock_run
     ):
         """Test error handling during scan."""
+        mock_which.return_value = "/usr/bin/semgrep"
         mock_exists.return_value = True
-        mock_isdir.return_value = True
-        
-        version_result = Mock(returncode=0)
+        mock_is_dir.return_value = True
         
         # Mock scan with errors
         output_with_errors = {
@@ -417,13 +415,11 @@ class TestSemgrepIntegration:
             "paths": {"scanned": []}
         }
         
-        scan_result = Mock(
+        mock_run.return_value = Mock(
             returncode=0,
             stdout=json.dumps(output_with_errors),
             stderr=""
         )
-        
-        mock_run.side_effect = [version_result, scan_result]
         
         scanner = SemgrepScanner()
         result = scanner.scan_directory("src/")

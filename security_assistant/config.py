@@ -1,20 +1,27 @@
 """
-Configuration management for Security Assistant.
+Configuration management for Security Assistant (Pydantic v2).
 
-This module provides centralized configuration management with support for:
-- YAML/JSON configuration files
-- Environment variables
-- Command-line arguments
-- Default values
-- Validation
+This module provides centralized configuration management with:
+- Pydantic v2 validation with type coercion
+- YAML/JSON configuration files support
+- Environment variables with SA_ prefix
+- Default values and nested configuration
+- Automatic JSON schema generation
 """
 
 import os
 import json
 from pathlib import Path
-from typing import Dict, Any, List, Optional, Union
-from dataclasses import dataclass, field, asdict
+from typing import Any, List, Optional, Union
 from enum import Enum
+
+from pydantic import (
+    BaseModel,
+    Field,
+    field_validator,
+    model_validator,
+    ConfigDict,
+)
 
 try:
     import yaml
@@ -43,486 +50,384 @@ class ReportFormat(str, Enum):
     TEXT = "text"
 
 
-@dataclass
-class ScannerConfig:
-    """Configuration for individual scanners."""
+class ScannerConfig(BaseModel):
+    """Base configuration for scanners."""
+    model_config = ConfigDict(extra="forbid", validate_default=True)
+
     enabled: bool = True
     config_file: Optional[str] = None
-    extra_args: List[str] = field(default_factory=list)
-    timeout: int = 300  # seconds
-    
-    def to_dict(self) -> Dict[str, Any]:
-        """Convert to dictionary."""
-        return asdict(self)
+    extra_args: List[str] = Field(default_factory=list)
+    timeout: int = Field(default=300, ge=1, le=3600)
+
+    def to_dict(self) -> dict[str, Any]:
+        """Convert to dictionary (backward compatibility)."""
+        return self.model_dump()
 
 
-@dataclass
 class BanditConfig(ScannerConfig):
-    """Bandit-specific configuration."""
-    severity_level: str = "low"  # low, medium, high
-    confidence_level: str = "low"  # low, medium, high
-    exclude_dirs: List[str] = field(default_factory=lambda: [
-        "tests", "test", ".git", ".venv", "venv", "node_modules"
-    ])
-    skip_tests: List[str] = field(default_factory=list)
+    """Bandit scanner configuration."""
+    severity_level: str = Field(default="low", pattern="^(low|medium|high)$")
+    confidence_level: str = Field(default="low", pattern="^(low|medium|high)$")
+    exclude_dirs: List[str] = Field(
+        default_factory=lambda: ["tests", "test", ".git", ".venv", "venv", "node_modules"]
+    )
+    skip_tests: List[str] = Field(default_factory=list)
 
 
-@dataclass
 class SemgrepConfig(ScannerConfig):
-    """Semgrep-specific configuration."""
-    rules: List[str] = field(default_factory=lambda: ["auto"])
-    exclude_rules: List[str] = field(default_factory=list)
-    max_memory: int = 5000  # MB
-    max_target_bytes: int = 1000000  # 1MB
+    """Semgrep scanner configuration."""
+    rules: List[str] = Field(default_factory=lambda: ["auto"])
+    exclude_rules: List[str] = Field(default_factory=list)
+    max_memory: int = Field(default=5000, ge=100, le=50000)
+    max_target_bytes: int = Field(default=1000000, ge=1000)
 
 
-@dataclass
 class TrivyConfig(ScannerConfig):
-    """Trivy-specific configuration."""
-    severity: List[str] = field(default_factory=lambda: [
-        "CRITICAL", "HIGH", "MEDIUM", "LOW"
-    ])
-    scanners: List[str] = field(default_factory=lambda: ["vuln", "secret", "config"])
-    skip_dirs: List[str] = field(default_factory=lambda: [
-        ".git", ".venv", "venv", "node_modules"
-    ])
+    """Trivy scanner configuration."""
+    severity: List[str] = Field(
+        default_factory=lambda: ["CRITICAL", "HIGH", "MEDIUM", "LOW"]
+    )
+    scanners: List[str] = Field(default_factory=lambda: ["vuln", "secret", "config"])
+    skip_dirs: List[str] = Field(
+        default_factory=lambda: [".git", ".venv", "venv", "node_modules"]
+    )
+
+    @field_validator("severity")
+    @classmethod
+    def validate_severity(cls, v: List[str]) -> List[str]:
+        valid = {"CRITICAL", "HIGH", "MEDIUM", "LOW", "UNKNOWN"}
+        for s in v:
+            if s.upper() not in valid:
+                raise ValueError(f"Invalid severity: {s}. Must be one of {valid}")
+        return [s.upper() for s in v]
+
+    @field_validator("scanners")
+    @classmethod
+    def validate_scanners(cls, v: List[str]) -> List[str]:
+        valid = {"vuln", "secret", "config", "license"}
+        for s in v:
+            if s.lower() not in valid:
+                raise ValueError(f"Invalid scanner: {s}. Must be one of {valid}")
+        return [s.lower() for s in v]
 
 
-@dataclass
-class OrchestratorConfig:
+class OrchestratorConfig(BaseModel):
     """Orchestrator configuration."""
+    model_config = ConfigDict(extra="forbid", validate_default=True)
+
     deduplication_strategy: DeduplicationStrategy = DeduplicationStrategy.BOTH
-    max_workers: int = 3
+    max_workers: int = Field(default=3, ge=1, le=16)
     parallel_execution: bool = True
     continue_on_error: bool = True
 
 
-@dataclass
-class ReportConfig:
+class ReportConfig(BaseModel):
     """Report generation configuration."""
-    formats: List[ReportFormat] = field(default_factory=lambda: [
-        ReportFormat.JSON, ReportFormat.HTML
-    ])
-    output_dir: str = "security-reports"
+    model_config = ConfigDict(extra="forbid", validate_default=True)
+
+    formats: List[ReportFormat] = Field(
+        default_factory=lambda: [ReportFormat.JSON, ReportFormat.HTML]
+    )
+    output_dir: str = Field(default="security-reports", min_length=1)
     include_code_snippets: bool = True
-    max_snippet_lines: int = 10
-    group_by: str = "severity"  # severity, scanner, file
+    max_snippet_lines: int = Field(default=10, ge=1, le=100)
+    group_by: str = Field(default="severity", pattern="^(severity|scanner|file)$")
 
 
-@dataclass
-class GitLabConfig:
+class GitLabConfig(BaseModel):
     """GitLab integration configuration."""
+    model_config = ConfigDict(extra="forbid", validate_default=True)
+
     enabled: bool = False
     url: Optional[str] = None
     token: Optional[str] = None
     project_id: Optional[str] = None
     create_issues: bool = False
-    priority_threshold: int = 70
-    max_issues: int = 10
-    issue_labels: List[str] = field(default_factory=lambda: ["security"])
-    assignee_ids: List[int] = field(default_factory=list)
+    priority_threshold: int = Field(default=70, ge=0, le=100)
+    max_issues: int = Field(default=10, ge=1, le=100)
+    issue_labels: List[str] = Field(default_factory=lambda: ["security"])
+    assignee_ids: List[int] = Field(default_factory=list)
+
+    @model_validator(mode="after")
+    def validate_gitlab_config(self) -> "GitLabConfig":
+        if self.enabled and not self.url:
+            raise ValueError("GitLab URL is required when GitLab is enabled")
+        if self.create_issues:
+            if not self.token:
+                raise ValueError("GitLab token is required for issue creation")
+            if not self.project_id:
+                raise ValueError("GitLab project_id is required for issue creation")
+        return self
 
 
-@dataclass
-class ThresholdConfig:
+class ThresholdConfig(BaseModel):
     """Severity threshold configuration."""
+    model_config = ConfigDict(extra="forbid", validate_default=True)
+
     fail_on_critical: bool = True
     fail_on_high: bool = False
     fail_on_medium: bool = False
-    max_critical: int = 0
-    max_high: int = 10
-    max_medium: int = 50
+    max_critical: int = Field(default=0, ge=0)
+    max_high: int = Field(default=10, ge=0)
+    max_medium: int = Field(default=50, ge=0)
 
 
-@dataclass
-class SecurityAssistantConfig:
+class SecurityAssistantConfig(BaseModel):
     """Main configuration for Security Assistant."""
-    
-    # Scanner configurations
-    bandit: BanditConfig = field(default_factory=BanditConfig)
-    semgrep: SemgrepConfig = field(default_factory=SemgrepConfig)
-    trivy: TrivyConfig = field(default_factory=TrivyConfig)
-    
-    # Orchestrator configuration
-    orchestrator: OrchestratorConfig = field(default_factory=OrchestratorConfig)
-    
-    # Report configuration
-    report: ReportConfig = field(default_factory=ReportConfig)
-    
-    # GitLab integration
-    gitlab: GitLabConfig = field(default_factory=GitLabConfig)
-    
-    # Thresholds
-    thresholds: ThresholdConfig = field(default_factory=ThresholdConfig)
-    
-    # General settings
-    scan_target: str = "."
+    model_config = ConfigDict(
+        extra="forbid",
+        validate_default=True,
+        env_prefix="SA_",
+    )
+
+    bandit: BanditConfig = Field(default_factory=BanditConfig)
+    semgrep: SemgrepConfig = Field(default_factory=SemgrepConfig)
+    trivy: TrivyConfig = Field(default_factory=TrivyConfig)
+    orchestrator: OrchestratorConfig = Field(default_factory=OrchestratorConfig)
+    report: ReportConfig = Field(default_factory=ReportConfig)
+    gitlab: GitLabConfig = Field(default_factory=GitLabConfig)
+    thresholds: ThresholdConfig = Field(default_factory=ThresholdConfig)
+
+    scan_target: str = Field(default=".", min_length=1)
     verbose: bool = False
-    log_level: str = "INFO"
+    log_level: str = Field(default="INFO", pattern="^(DEBUG|INFO|WARNING|ERROR|CRITICAL)$")
     log_file: Optional[str] = None
-    
-    def to_dict(self) -> Dict[str, Any]:
+
+    @model_validator(mode="after")
+    def validate_at_least_one_scanner(self) -> "SecurityAssistantConfig":
+        if not any([self.bandit.enabled, self.semgrep.enabled, self.trivy.enabled]):
+            raise ValueError("At least one scanner must be enabled")
+        return self
+
+    def to_dict(self) -> dict[str, Any]:
         """Convert configuration to dictionary."""
-        return {
-            'bandit': self.bandit.to_dict(),
-            'semgrep': self.semgrep.to_dict(),
-            'trivy': self.trivy.to_dict(),
-            'orchestrator': asdict(self.orchestrator),
-            'report': asdict(self.report),
-            'gitlab': asdict(self.gitlab),
-            'thresholds': asdict(self.thresholds),
-            'scan_target': self.scan_target,
-            'verbose': self.verbose,
-            'log_level': self.log_level,
-            'log_file': self.log_file
-        }
-    
-    def save(self, path: Union[str, Path], format: str = 'yaml') -> None:
-        """
-        Save configuration to file.
+        return self.model_dump()
+
+    def validate(self) -> List[str]:
+        """Validate configuration (backward compatibility).
         
-        Args:
-            path: Output file path
-            format: File format ('yaml' or 'json')
+        Note: Pydantic validates automatically on creation.
+        This method is kept for backward compatibility.
+        
+        Returns:
+            Empty list (validation happens at construction time)
         """
+        return []
+
+    def save(self, path: Union[str, Path], format: str = "yaml") -> None:
+        """Save configuration to file."""
         path = Path(path)
-        data = self.to_dict()
-        
-        with open(path, 'w') as f:
-            if format == 'yaml':
+        data = self.model_dump(mode="json")
+
+        with open(path, "w") as f:
+            if format == "yaml":
                 if yaml is None:
-                    raise ImportError("PyYAML is required for YAML format. Install with: pip install pyyaml")
+                    raise ImportError(
+                        "PyYAML is required for YAML format. Install with: pip install pyyaml"
+                    )
                 yaml.dump(data, f, default_flow_style=False, sort_keys=False)
-            elif format == 'json':
+            elif format == "json":
                 json.dump(data, f, indent=2)
             else:
                 raise ValueError(f"Unsupported format: {format}")
-    
+
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'SecurityAssistantConfig':
-        """
-        Create configuration from dictionary.
-        
-        Args:
-            data: Configuration dictionary
-            
-        Returns:
-            SecurityAssistantConfig instance
-        """
-        config = cls()
-        
-        # Update scanner configs
-        if 'bandit' in data:
-            config.bandit = BanditConfig(**data['bandit'])
-        if 'semgrep' in data:
-            config.semgrep = SemgrepConfig(**data['semgrep'])
-        if 'trivy' in data:
-            config.trivy = TrivyConfig(**data['trivy'])
-        
-        # Update orchestrator config
-        if 'orchestrator' in data:
-            orch_data = data['orchestrator']
-            if 'deduplication_strategy' in orch_data:
-                orch_data['deduplication_strategy'] = DeduplicationStrategy(
-                    orch_data['deduplication_strategy']
-                )
-            config.orchestrator = OrchestratorConfig(**orch_data)
-        
-        # Update report config
-        if 'report' in data:
-            report_data = data['report']
-            if 'formats' in report_data:
-                report_data['formats'] = [
-                    ReportFormat(f) for f in report_data['formats']
-                ]
-            config.report = ReportConfig(**report_data)
-        
-        # Update GitLab config
-        if 'gitlab' in data:
-            config.gitlab = GitLabConfig(**data['gitlab'])
-        
-        # Update thresholds
-        if 'thresholds' in data:
-            config.thresholds = ThresholdConfig(**data['thresholds'])
-        
-        # Update general settings
-        if 'scan_target' in data:
-            config.scan_target = data['scan_target']
-        if 'verbose' in data:
-            config.verbose = data['verbose']
-        if 'log_level' in data:
-            config.log_level = data['log_level']
-        if 'log_file' in data:
-            config.log_file = data['log_file']
-        
-        return config
-    
+    def from_dict(cls, data: dict[str, Any]) -> "SecurityAssistantConfig":
+        """Create configuration from dictionary."""
+        return cls.model_validate(data)
+
     @classmethod
-    def load(cls, path: Union[str, Path], validate_security: bool = True) -> 'SecurityAssistantConfig':
-        """
-        Load configuration from file.
-        
-        Args:
-            path: Configuration file path
-            validate_security: Enable security validation (default: True)
-            
-        Returns:
-            SecurityAssistantConfig instance
-            
-        Raises:
-            ValueError: If security validation fails
-        """
+    def load(
+        cls, path: Union[str, Path], validate_security: bool = True
+    ) -> "SecurityAssistantConfig":
+        """Load configuration from file."""
         path = Path(path)
-        
+
         if not path.exists():
             raise FileNotFoundError(f"Configuration file not found: {path}")
-        
-        # META-SECURITY: Validate config file path
+
         if validate_security and ConfigurationSandbox is not None:
             sandbox = ConfigurationSandbox(project_root=Path.cwd())
             validation_result = sandbox.validate_config_path(path)
-            
+
             if not validation_result.is_valid:
-                error_msg = (
-                    f"Configuration file validation failed:\n"
-                    + "\n".join(f"  - {err}" for err in validation_result.errors)
+                error_msg = "Configuration file validation failed:\n" + "\n".join(
+                    f"  - {err}" for err in validation_result.errors
                 )
                 raise ValueError(error_msg)
-            
-            # Log warnings
+
             import logging
             logger = logging.getLogger(__name__)
             for warning in validation_result.warnings:
-                logger.warning(f"⚠️  Config validation warning: {warning}")
-        
-        with open(path, 'r') as f:
-            if path.suffix in ['.yaml', '.yml']:
+                logger.warning(f"Config validation warning: {warning}")
+
+        with open(path, "r") as f:
+            if path.suffix in [".yaml", ".yml"]:
                 if yaml is None:
-                    raise ImportError("PyYAML is required for YAML format. Install with: pip install pyyaml")
+                    raise ImportError(
+                        "PyYAML is required for YAML format. Install with: pip install pyyaml"
+                    )
                 data = yaml.safe_load(f)
-            elif path.suffix == '.json':
+            elif path.suffix == ".json":
                 data = json.load(f)
             else:
                 raise ValueError(f"Unsupported file format: {path.suffix}")
-        
-        return cls.from_dict(data)
-    
+
+        return cls.model_validate(data)
+
     @classmethod
-    def from_env(cls) -> 'SecurityAssistantConfig':
+    def from_env(cls) -> "SecurityAssistantConfig":
+        """Create configuration from environment variables.
+        
+        Environment variables (SA_ prefix):
+        - SA_BANDIT_ENABLED, SA_SEMGREP_ENABLED, SA_TRIVY_ENABLED
+        - SA_DEDUP_STRATEGY, SA_MAX_WORKERS
+        - SA_REPORT_FORMATS, SA_OUTPUT_DIR
+        - SA_GITLAB_URL, SA_GITLAB_TOKEN, SA_GITLAB_PROJECT_ID
+        - SA_FAIL_ON_CRITICAL, SA_FAIL_ON_HIGH, SA_FAIL_ON_MEDIUM
+        - SA_SCAN_TARGET, SA_VERBOSE, SA_LOG_LEVEL
         """
-        Create configuration from environment variables.
-        
-        Environment variables:
-        - SA_BANDIT_ENABLED: Enable Bandit scanner
-        - SA_SEMGREP_ENABLED: Enable Semgrep scanner
-        - SA_TRIVY_ENABLED: Enable Trivy scanner
-        - SA_DEDUP_STRATEGY: Deduplication strategy
-        - SA_MAX_WORKERS: Maximum parallel workers
-        - SA_REPORT_FORMATS: Comma-separated report formats
-        - SA_OUTPUT_DIR: Report output directory
-        - SA_GITLAB_URL: GitLab URL
-        - SA_GITLAB_TOKEN: GitLab API token
-        - SA_GITLAB_PROJECT_ID: GitLab project ID
-        - SA_FAIL_ON_CRITICAL: Fail on critical findings
-        - SA_FAIL_ON_HIGH: Fail on high findings
-        - SA_SCAN_TARGET: Scan target directory
-        - SA_VERBOSE: Verbose output
-        - SA_LOG_LEVEL: Log level
-        
-        Returns:
-            SecurityAssistantConfig instance
-        """
-        config = cls()
-        
+        data: dict[str, Any] = {}
+
         # Scanner enablement
-        if os.getenv('SA_BANDIT_ENABLED'):
-            config.bandit.enabled = os.getenv('SA_BANDIT_ENABLED').lower() == 'true'
-        if os.getenv('SA_SEMGREP_ENABLED'):
-            config.semgrep.enabled = os.getenv('SA_SEMGREP_ENABLED').lower() == 'true'
-        if os.getenv('SA_TRIVY_ENABLED'):
-            config.trivy.enabled = os.getenv('SA_TRIVY_ENABLED').lower() == 'true'
-        
-        # Orchestrator
-        if os.getenv('SA_DEDUP_STRATEGY'):
-            config.orchestrator.deduplication_strategy = DeduplicationStrategy(
-                os.getenv('SA_DEDUP_STRATEGY')
+        if os.getenv("SA_BANDIT_ENABLED"):
+            data.setdefault("bandit", {})["enabled"] = (
+                os.getenv("SA_BANDIT_ENABLED", "").lower() == "true"
             )
-        if os.getenv('SA_MAX_WORKERS'):
-            config.orchestrator.max_workers = int(os.getenv('SA_MAX_WORKERS'))
-        
+        if os.getenv("SA_SEMGREP_ENABLED"):
+            data.setdefault("semgrep", {})["enabled"] = (
+                os.getenv("SA_SEMGREP_ENABLED", "").lower() == "true"
+            )
+        if os.getenv("SA_TRIVY_ENABLED"):
+            data.setdefault("trivy", {})["enabled"] = (
+                os.getenv("SA_TRIVY_ENABLED", "").lower() == "true"
+            )
+
+        # Orchestrator
+        if os.getenv("SA_DEDUP_STRATEGY"):
+            data.setdefault("orchestrator", {})["deduplication_strategy"] = os.getenv(
+                "SA_DEDUP_STRATEGY"
+            )
+        if os.getenv("SA_MAX_WORKERS"):
+            data.setdefault("orchestrator", {})["max_workers"] = int(
+                os.getenv("SA_MAX_WORKERS", "3")
+            )
+
         # Report
-        if os.getenv('SA_REPORT_FORMATS'):
-            formats = os.getenv('SA_REPORT_FORMATS').split(',')
-            config.report.formats = [ReportFormat(f.strip()) for f in formats]
-        if os.getenv('SA_OUTPUT_DIR'):
-            config.report.output_dir = os.getenv('SA_OUTPUT_DIR')
-        
+        if os.getenv("SA_REPORT_FORMATS"):
+            formats = os.getenv("SA_REPORT_FORMATS", "").split(",")
+            data.setdefault("report", {})["formats"] = [f.strip() for f in formats]
+        if os.getenv("SA_OUTPUT_DIR"):
+            data.setdefault("report", {})["output_dir"] = os.getenv("SA_OUTPUT_DIR")
+
         # GitLab
-        if os.getenv('SA_GITLAB_URL'):
-            config.gitlab.enabled = True
-            config.gitlab.url = os.getenv('SA_GITLAB_URL')
-        if os.getenv('SA_GITLAB_TOKEN'):
-            config.gitlab.token = os.getenv('SA_GITLAB_TOKEN')
-        if os.getenv('SA_GITLAB_PROJECT_ID'):
-            config.gitlab.project_id = os.getenv('SA_GITLAB_PROJECT_ID')
-        if os.getenv('SA_GITLAB_CREATE_ISSUES'):
-            config.gitlab.create_issues = os.getenv('SA_GITLAB_CREATE_ISSUES').lower() == 'true'
-        if os.getenv('SA_PRIORITY_THRESHOLD'):
-            config.gitlab.priority_threshold = int(os.getenv('SA_PRIORITY_THRESHOLD'))
-        
+        if os.getenv("SA_GITLAB_URL"):
+            data.setdefault("gitlab", {})["enabled"] = True
+            data["gitlab"]["url"] = os.getenv("SA_GITLAB_URL")
+        if os.getenv("SA_GITLAB_TOKEN"):
+            data.setdefault("gitlab", {})["token"] = os.getenv("SA_GITLAB_TOKEN")
+        if os.getenv("SA_GITLAB_PROJECT_ID"):
+            data.setdefault("gitlab", {})["project_id"] = os.getenv("SA_GITLAB_PROJECT_ID")
+        if os.getenv("SA_GITLAB_CREATE_ISSUES"):
+            data.setdefault("gitlab", {})["create_issues"] = (
+                os.getenv("SA_GITLAB_CREATE_ISSUES", "").lower() == "true"
+            )
+        if os.getenv("SA_PRIORITY_THRESHOLD"):
+            data.setdefault("gitlab", {})["priority_threshold"] = int(
+                os.getenv("SA_PRIORITY_THRESHOLD", "70")
+            )
+
         # Thresholds
-        if os.getenv('SA_FAIL_ON_CRITICAL'):
-            config.thresholds.fail_on_critical = os.getenv('SA_FAIL_ON_CRITICAL').lower() == 'true'
-        if os.getenv('SA_FAIL_ON_HIGH'):
-            config.thresholds.fail_on_high = os.getenv('SA_FAIL_ON_HIGH').lower() == 'true'
-        if os.getenv('SA_FAIL_ON_MEDIUM'):
-            config.thresholds.fail_on_medium = os.getenv('SA_FAIL_ON_MEDIUM').lower() == 'true'
-        
+        if os.getenv("SA_FAIL_ON_CRITICAL"):
+            data.setdefault("thresholds", {})["fail_on_critical"] = (
+                os.getenv("SA_FAIL_ON_CRITICAL", "").lower() == "true"
+            )
+        if os.getenv("SA_FAIL_ON_HIGH"):
+            data.setdefault("thresholds", {})["fail_on_high"] = (
+                os.getenv("SA_FAIL_ON_HIGH", "").lower() == "true"
+            )
+        if os.getenv("SA_FAIL_ON_MEDIUM"):
+            data.setdefault("thresholds", {})["fail_on_medium"] = (
+                os.getenv("SA_FAIL_ON_MEDIUM", "").lower() == "true"
+            )
+
         # General
-        if os.getenv('SA_SCAN_TARGET'):
-            config.scan_target = os.getenv('SA_SCAN_TARGET')
-        if os.getenv('SA_VERBOSE'):
-            config.verbose = os.getenv('SA_VERBOSE').lower() == 'true'
-        if os.getenv('SA_LOG_LEVEL'):
-            config.log_level = os.getenv('SA_LOG_LEVEL')
-        if os.getenv('SA_LOG_FILE'):
-            config.log_file = os.getenv('SA_LOG_FILE')
-        
-        return config
-    
-    def merge(self, other: 'SecurityAssistantConfig') -> 'SecurityAssistantConfig':
-        """
-        Merge with another configuration (other takes precedence).
-        
-        Args:
-            other: Configuration to merge
-            
-        Returns:
-            New merged configuration
-        """
-        merged_dict = self.to_dict()
-        other_dict = other.to_dict()
-        
-        def deep_merge(base: Dict, override: Dict) -> Dict:
-            """Deep merge two dictionaries."""
+        if os.getenv("SA_SCAN_TARGET"):
+            data["scan_target"] = os.getenv("SA_SCAN_TARGET")
+        if os.getenv("SA_VERBOSE"):
+            data["verbose"] = os.getenv("SA_VERBOSE", "").lower() == "true"
+        if os.getenv("SA_LOG_LEVEL"):
+            data["log_level"] = os.getenv("SA_LOG_LEVEL")
+        if os.getenv("SA_LOG_FILE"):
+            data["log_file"] = os.getenv("SA_LOG_FILE")
+
+        return cls.model_validate(data) if data else cls()
+
+    def merge(self, other: "SecurityAssistantConfig") -> "SecurityAssistantConfig":
+        """Merge with another configuration (other takes precedence)."""
+        base_dict = self.model_dump()
+        other_dict = other.model_dump()
+
+        def deep_merge(base: dict, override: dict) -> dict:
             result = base.copy()
             for key, value in override.items():
-                if key in result and isinstance(result[key], dict) and isinstance(value, dict):
+                if (
+                    key in result
+                    and isinstance(result[key], dict)
+                    and isinstance(value, dict)
+                ):
                     result[key] = deep_merge(result[key], value)
                 else:
                     result[key] = value
             return result
-        
-        merged = deep_merge(merged_dict, other_dict)
-        return self.from_dict(merged)
-    
-    def validate(self) -> List[str]:
-        """
-        Validate configuration.
-        
-        Returns:
-            List of validation errors (empty if valid)
-        """
-        errors = []
-        
-        # Check at least one scanner is enabled
-        if not any([self.bandit.enabled, self.semgrep.enabled, self.trivy.enabled]):
-            errors.append("At least one scanner must be enabled")
-        
-        # Check max_workers
-        if self.orchestrator.max_workers < 1:
-            errors.append("max_workers must be at least 1")
-        
-        # Check output directory
-        if not self.report.output_dir:
-            errors.append("output_dir cannot be empty")
-        
-        # Check GitLab config if enabled
-        if self.gitlab.enabled:
-            if not self.gitlab.url:
-                errors.append("GitLab URL is required when GitLab is enabled")
-            if self.gitlab.create_issues and not self.gitlab.token:
-                errors.append("GitLab token is required for issue creation")
-            if self.gitlab.create_issues and not self.gitlab.project_id:
-                errors.append("GitLab project_id is required for issue creation")
-        
-        # Check priority threshold
-        if not 0 <= self.gitlab.priority_threshold <= 100:
-            errors.append("priority_threshold must be between 0 and 100")
-        
-        # Check log level
-        valid_log_levels = ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']
-        if self.log_level not in valid_log_levels:
-            errors.append(f"log_level must be one of {valid_log_levels}")
-        
-        return errors
+
+        merged = deep_merge(base_dict, other_dict)
+        return self.model_validate(merged)
 
 
 class ConfigManager:
     """Configuration manager with multiple sources."""
-    
-    def __init__(self):
-        """Initialize configuration manager."""
+
+    def __init__(self) -> None:
         self._config: Optional[SecurityAssistantConfig] = None
-    
+
     def load_config(
         self,
         config_file: Optional[Union[str, Path]] = None,
         use_env: bool = True,
-        defaults: Optional[SecurityAssistantConfig] = None
+        defaults: Optional[SecurityAssistantConfig] = None,
     ) -> SecurityAssistantConfig:
-        """
-        Load configuration from multiple sources.
+        """Load configuration from multiple sources.
         
         Priority (highest to lowest):
         1. Environment variables
         2. Configuration file
         3. Defaults
-        
-        Args:
-            config_file: Path to configuration file
-            use_env: Whether to use environment variables
-            defaults: Default configuration
-            
-        Returns:
-            Merged configuration
         """
-        # Start with defaults
         config = defaults or SecurityAssistantConfig()
-        
-        # Merge with config file
+
         if config_file:
             file_config = SecurityAssistantConfig.load(config_file)
             config = config.merge(file_config)
-        
-        # Merge with environment variables
+
         if use_env:
             env_config = SecurityAssistantConfig.from_env()
             config = config.merge(env_config)
-        
-        # Validate
-        errors = config.validate()
-        if errors:
-            raise ValueError(f"Configuration validation failed:\n" + "\n".join(f"  - {e}" for e in errors))
-        
+
         self._config = config
         return config
-    
+
     @property
     def config(self) -> SecurityAssistantConfig:
         """Get current configuration."""
         if self._config is None:
             self._config = self.load_config()
         return self._config
-    
-    def create_default_config(self, path: Union[str, Path], format: str = 'yaml') -> None:
-        """
-        Create a default configuration file.
-        
-        Args:
-            path: Output file path
-            format: File format ('yaml' or 'json')
-        """
+
+    def create_default_config(
+        self, path: Union[str, Path], format: str = "yaml"
+    ) -> None:
+        """Create a default configuration file."""
         config = SecurityAssistantConfig()
         config.save(path, format)
 
@@ -537,17 +442,7 @@ def get_config() -> SecurityAssistantConfig:
 
 
 def load_config(
-    config_file: Optional[Union[str, Path]] = None,
-    use_env: bool = True
+    config_file: Optional[Union[str, Path]] = None, use_env: bool = True
 ) -> SecurityAssistantConfig:
-    """
-    Load configuration.
-    
-    Args:
-        config_file: Path to configuration file
-        use_env: Whether to use environment variables
-        
-    Returns:
-        Configuration instance
-    """
+    """Load configuration."""
     return config_manager.load_config(config_file, use_env)

@@ -280,7 +280,6 @@ class TestEPSSClientIntegration:
     """Integration tests for EPSS client (requires internet)."""
     
     @pytest.mark.integration
-    @pytest.mark.skip(reason="Requires internet connection")
     def test_real_api_call(self):
         """Test real API call to EPSS (integration test)."""
         client = EPSSClient(cache_enabled=False)
@@ -292,7 +291,6 @@ class TestEPSSClientIntegration:
         assert score is None or (0.0 <= score <= 1.0)
     
     @pytest.mark.integration
-    @pytest.mark.skip(reason="Requires internet connection")
     def test_real_batch_api_call(self):
         """Test real batch API call (integration test)."""
         client = EPSSClient(cache_enabled=True)

@@ -6,25 +6,23 @@ Converts findings to GitLab issue format.
 
 Checked: semgrep@1.144.0 (Nov 2025) - latest stable
 Features: 3x faster multicore, native Windows support, Python 3.14 compatible
+
+Refactored: Session 47 - Now extends BaseScanner
 """
 
-import os
 import json
 import logging
-import subprocess
+import os  # Kept for backward compatibility with tests
+import subprocess  # Kept for backward compatibility with tests
 from typing import List, Dict, Optional, Any, Set
 from dataclasses import dataclass, field
 from pathlib import Path
 from datetime import datetime
 
+from .base_scanner import BaseScanner, ScannerConfig, ScannerNotInstalledError
 from ..gitlab_api import IssueData
 
 
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
 logger = logging.getLogger(__name__)
 
 
@@ -131,12 +129,12 @@ class SemgrepScannerError(Exception):
     pass
 
 
-class SemgrepNotInstalledError(SemgrepScannerError):
+class SemgrepNotInstalledError(ScannerNotInstalledError):
     """Semgrep is not installed."""
     pass
 
 
-class SemgrepScanner:
+class SemgrepScanner(BaseScanner[SemgrepFinding, SemgrepScanResult]):
     """
     Semgrep security scanner integration.
     
@@ -152,6 +150,8 @@ class SemgrepScanner:
     - Python, JavaScript/TypeScript, Go, Java, Ruby, PHP
     - C, C++, C#, Kotlin, Scala, Rust
     - Bash, YAML, JSON, Dockerfile, Terraform
+    
+    Extends BaseScanner for common functionality.
     """
     
     # Semgrep severity mapping to our levels
@@ -161,12 +161,17 @@ class SemgrepScanner:
         "INFO": "LOW"
     }
     
+    # Semgrep uses different severity names
+    SEVERITY_LEVELS = {"INFO": 1, "WARNING": 2, "ERROR": 3}
+    
     def __init__(
         self,
         min_severity: str = "INFO",
         config: str = "auto",
         exclude_dirs: Optional[List[str]] = None,
-        custom_rules: Optional[List[str]] = None
+        custom_rules: Optional[List[str]] = None,
+        scanner_config: Optional[ScannerConfig] = None,
+        **kwargs
     ):
         """
         Initialize Semgrep scanner.
@@ -181,112 +186,49 @@ class SemgrepScanner:
                 - Path to custom rules file/directory
             exclude_dirs: Directories to exclude from scanning
             custom_rules: Additional custom rule files/URLs
+            scanner_config: Base scanner configuration (optional)
         """
-        self.min_severity = min_severity
-        self.config = config
+        self.semgrep_config = config
         self.custom_rules = custom_rules or []
-        self.exclude_dirs = exclude_dirs or [
-            "venv", ".venv", "env", ".env",
-            "node_modules", ".git", "__pycache__",
-            "build", "dist", ".tox", "vendor",
-            ".pytest_cache", ".mypy_cache"
-        ]
         
-        # Verify Semgrep is installed
-        if not self._check_semgrep_installed():
-            raise SemgrepNotInstalledError(
-                "Semgrep is not installed. Install with: pip install semgrep"
+        # Build base config
+        if scanner_config is None:
+            scanner_config = ScannerConfig(
+                min_severity=min_severity,
+                timeout=600,  # 10 minute timeout for Semgrep
+                exclude_dirs=exclude_dirs or [
+                    "venv", ".venv", "env", ".env",
+                    "node_modules", ".git", "__pycache__",
+                    "build", "dist", ".tox", "vendor",
+                    ".pytest_cache", ".mypy_cache"
+                ]
             )
         
-        logger.info(f"Semgrep scanner initialized (min_severity={min_severity}, config={config})")
+        # Call parent constructor
+        super().__init__(config=scanner_config, **kwargs)
+        
+        logger.info(f"Semgrep scanner initialized (config={config})")
     
-    def _check_semgrep_installed(self) -> bool:
-        """Check if Semgrep is installed."""
-        try:
-            result = subprocess.run(
-                ["semgrep", "--version"],
-                capture_output=True,
-                text=True,
-                timeout=5
-            )
-            return result.returncode == 0
-        except (subprocess.SubprocessError, FileNotFoundError):
-            return False
+    @property
+    def name(self) -> str:
+        return "semgrep"
     
-    def scan_file(self, file_path: str) -> SemgrepScanResult:
-        """
-        Scan a single file.
-        
-        Args:
-            file_path: Path to file
-            
-        Returns:
-            SemgrepScanResult with findings
-            
-        Raises:
-            SemgrepScannerError: On scan errors
-            
-        Example:
-            >>> scanner = SemgrepScanner(min_severity="WARNING")
-            >>> result = scanner.scan_file("app.py")
-            >>> print(f"Found {len(result.findings)} issues")
-        """
-        if not os.path.exists(file_path):
-            raise SemgrepScannerError(f"File not found: {file_path}")
-        
-        if not os.path.isfile(file_path):
-            raise SemgrepScannerError(f"Not a file: {file_path}")
-        
-        logger.info(f"Scanning file: {file_path}")
-        
-        return self._run_semgrep([file_path])
+    @property
+    def command(self) -> str:
+        return "semgrep"
     
-    def scan_directory(self, directory_path: str, recursive: bool = True) -> SemgrepScanResult:
-        """
-        Scan a directory.
-        
-        Args:
-            directory_path: Path to directory
-            recursive: Scan subdirectories (always True for Semgrep)
-            
-        Returns:
-            SemgrepScanResult with findings
-            
-        Raises:
-            SemgrepScannerError: On scan errors
-            
-        Example:
-            >>> scanner = SemgrepScanner(config="p/security-audit")
-            >>> result = scanner.scan_directory("src/")
-            >>> print(f"Scanned {result.files_scanned} files")
-            >>> print(f"Languages: {', '.join(result.languages)}")
-        """
-        if not os.path.exists(directory_path):
-            raise SemgrepScannerError(f"Directory not found: {directory_path}")
-        
-        if not os.path.isdir(directory_path):
-            raise SemgrepScannerError(f"Not a directory: {directory_path}")
-        
-        logger.info(f"Scanning directory: {directory_path}")
-        
-        return self._run_semgrep([directory_path])
+    def _get_not_installed_error(self) -> SemgrepNotInstalledError:
+        return SemgrepNotInstalledError(
+            "Semgrep is not installed. Install with: pip install semgrep"
+        )
     
-    def _run_semgrep(self, targets: List[str]) -> SemgrepScanResult:
-        """
-        Run Semgrep scanner on targets.
-        
-        Args:
-            targets: List of files/directories to scan
-            
-        Returns:
-            SemgrepScanResult with findings
-        """
-        # Build Semgrep command
+    def _build_command(self, targets: List[str], **kwargs) -> List[str]:
+        """Build Semgrep command with arguments."""
         cmd = [
             "semgrep",
-            "--json",  # JSON output
-            "--config", self.config,
-            "--metrics", "off",  # Disable telemetry
+            "--json",
+            "--config", self.semgrep_config,
+            "--metrics", "off",
         ]
         
         # Add custom rules
@@ -294,42 +236,15 @@ class SemgrepScanner:
             cmd.extend(["--config", rule])
         
         # Add exclusions
-        for exclude in self.exclude_dirs:
+        for exclude in self.config.exclude_dirs:
             cmd.extend(["--exclude", exclude])
         
-        # Add targets
         cmd.extend(targets)
-        
-        logger.debug(f"Running command: {' '.join(cmd)}")
-        
-        try:
-            # Run Semgrep
-            result = subprocess.run(
-                cmd,
-                capture_output=True,
-                text=True,
-                timeout=600  # 10 minute timeout
-            )
-            
-            # Semgrep returns exit code 1 if issues found, which is expected
-            if result.returncode not in [0, 1]:
-                # Check for common errors
-                if "No rules" in result.stderr:
-                    raise SemgrepScannerError(
-                        f"No rules found for config '{self.config}'. "
-                        "Try 'p/security-audit' or 'p/ci'"
-                    )
-                raise SemgrepScannerError(
-                    f"Semgrep failed with exit code {result.returncode}: {result.stderr}"
-                )
-            
-            # Parse JSON output
-            return self._parse_semgrep_output(result.stdout)
-            
-        except subprocess.TimeoutExpired:
-            raise SemgrepScannerError("Semgrep scan timeout (>10 minutes)")
-        except subprocess.SubprocessError as e:
-            raise SemgrepScannerError(f"Failed to run Semgrep: {str(e)}")
+        return cmd
+    
+    def _parse_output(self, raw: str) -> SemgrepScanResult:
+        """Parse Semgrep JSON output."""
+        return self._parse_semgrep_output(raw)
     
     def _parse_semgrep_output(self, json_output: str) -> SemgrepScanResult:
         """
@@ -406,12 +321,17 @@ class SemgrepScanner:
         Returns:
             True if finding should be included
         """
-        severity_levels = {"INFO": 1, "WARNING": 2, "ERROR": 3}
-        
-        min_level = severity_levels.get(self.min_severity, 1)
-        finding_level = severity_levels.get(finding.severity, 1)
-        
+        min_level = self.SEVERITY_LEVELS.get(self.config.min_severity.upper(), 1)
+        finding_level = self.SEVERITY_LEVELS.get(finding.severity, 1)
         return finding_level >= min_level
+    
+    def _get_findings_from_result(self, result: SemgrepScanResult) -> List[SemgrepFinding]:
+        """Extract findings list from scan result."""
+        return result.findings
+    
+    def _get_finding_file(self, finding: SemgrepFinding) -> str:
+        """Get file path from finding."""
+        return finding.path
     
     def finding_to_issue(
         self,

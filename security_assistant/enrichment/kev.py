@@ -15,8 +15,9 @@ Version: 1.0.0
 
 import logging
 import requests
-from typing import Dict, List, Optional, Set
+from typing import Dict, List, Optional, Set, Union
 from datetime import datetime, timedelta
+from pathlib import Path
 from dataclasses import dataclass
 import json
 
@@ -64,6 +65,7 @@ class KEVClient:
         self,
         cache_enabled: bool = True,
         offline_fallback: bool = True,
+        cache_file: Optional[Union[str, Path]] = None,
     ):
         """
         Initialize KEV client.
@@ -71,9 +73,11 @@ class KEVClient:
         Args:
             cache_enabled: Enable in-memory caching (default: True)
             offline_fallback: Use cached data if API fails (default: True)
+            cache_file: Path to persistent cache file (optional)
         """
         self.cache_enabled = cache_enabled
         self.offline_fallback = offline_fallback
+        self.cache_file = Path(cache_file) if cache_file else None
         
         # In-memory cache: {cve_id: KEVEntry}
         self._cache: Dict[str, KEVEntry] = {}
@@ -84,7 +88,7 @@ class KEVClient:
         self._catalog_date: Optional[str] = None
         self._catalog_count: int = 0
         
-        logger.info(f"Initialized KEVClient (cache={cache_enabled}, offline={offline_fallback})")
+        logger.info(f"Initialized KEVClient (cache={cache_enabled}, offline={offline_fallback}, file={self.cache_file})")
     
     def is_exploited(self, cve_id: str) -> bool:
         """
@@ -223,9 +227,14 @@ class KEVClient:
         
         Checks cache expiration and fetches fresh data if needed.
         """
-        # Check if cache is valid
+        # Check if memory cache is valid
         if self.cache_enabled and self._is_cache_valid():
             return
+            
+        # Check if file cache is valid
+        if self.cache_file and self._load_from_cache_file():
+            if self._is_cache_valid():
+                return
         
         # Fetch fresh catalog
         success = self._fetch_catalog()
@@ -238,6 +247,52 @@ class KEVClient:
         # If fetch failed and no cache, raise error
         if not success and not self._cache:
             logger.error("Failed to load KEV catalog and no cache available")
+
+    def _load_from_cache_file(self) -> bool:
+        """Load catalog from cache file."""
+        if not self.cache_file or not self.cache_file.exists():
+            return False
+            
+        try:
+            # Check file age
+            mtime = datetime.fromtimestamp(self.cache_file.stat().st_mtime)
+            age = datetime.now() - mtime
+            
+            # If expired and we are NOT in offline fallback mode (meaning we want fresh data), return False
+            # But if network fails later, we might still want this data?
+            # Actually _ensure_catalog_loaded calls this first. If it returns False (expired), 
+            # then it tries _fetch_catalog. If that fails, it checks self._cache.
+            # So if we return False here, self._cache is empty.
+            # We should load it ANYWAY if it exists, but mark it as expired?
+            # Or better: Load it, set timestamp. _ensure_catalog_loaded checks _is_cache_valid.
+            # So we should ALWAYS load it if it exists.
+            
+            with open(self.cache_file, "r") as f:
+                data = json.load(f)
+                
+            self._parse_catalog(data)
+            # Use file mtime as cache timestamp
+            self._cache_timestamp = mtime
+            
+            logger.info(f"Loaded KEV catalog from file: {self.cache_file}")
+            return True
+            
+        except Exception as e:
+            logger.warning(f"Failed to load KEV cache file: {e}")
+            return False
+
+    def _save_to_cache_file(self, data: dict) -> None:
+        """Save catalog to cache file."""
+        if not self.cache_file:
+            return
+            
+        try:
+            self.cache_file.parent.mkdir(parents=True, exist_ok=True)
+            with open(self.cache_file, "w") as f:
+                json.dump(data, f)
+            logger.info(f"Saved KEV catalog to cache file: {self.cache_file}")
+        except Exception as e:
+            logger.warning(f"Failed to save KEV cache file: {e}")
     
     def _is_cache_valid(self) -> bool:
         """
@@ -279,6 +334,10 @@ class KEVClient:
             response.raise_for_status()
             
             data = response.json()
+            
+            # Save to file cache if configured
+            if self.cache_file:
+                self._save_to_cache_file(data)
             
             # Parse catalog
             self._parse_catalog(data)

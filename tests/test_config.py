@@ -240,47 +240,36 @@ class TestMainConfig:
         assert len(errors) == 0
     
     def test_config_validate_no_scanners(self):
-        """Test validation with no scanners enabled"""
-        config = SecurityAssistantConfig()
-        config.bandit.enabled = False
-        config.semgrep.enabled = False
-        config.trivy.enabled = False
-        
-        errors = config.validate()
-        
-        assert len(errors) > 0
-        assert any("scanner must be enabled" in e for e in errors)
+        """Test validation with no scanners enabled (Pydantic validates at construction)"""
+        from pydantic import ValidationError
+        with pytest.raises(ValidationError, match="At least one scanner must be enabled"):
+            SecurityAssistantConfig(
+                bandit=BanditConfig(enabled=False),
+                semgrep=SemgrepConfig(enabled=False),
+                trivy=TrivyConfig(enabled=False),
+            )
     
     def test_config_validate_invalid_workers(self):
-        """Test validation with invalid max_workers"""
-        config = SecurityAssistantConfig()
-        config.orchestrator.max_workers = 0
-        
-        errors = config.validate()
-        
-        assert len(errors) > 0
-        assert any("max_workers" in e for e in errors)
+        """Test validation with invalid max_workers (Pydantic validates at construction)"""
+        from pydantic import ValidationError
+        with pytest.raises(ValidationError):
+            SecurityAssistantConfig(
+                orchestrator=OrchestratorConfig(max_workers=0)
+            )
     
     def test_config_validate_gitlab_missing_url(self):
-        """Test validation with GitLab enabled but no URL"""
-        config = SecurityAssistantConfig()
-        config.gitlab.enabled = True
-        config.gitlab.url = None
-        
-        errors = config.validate()
-        
-        assert len(errors) > 0
-        assert any("GitLab URL" in e for e in errors)
+        """Test validation with GitLab enabled but no URL (Pydantic validates at construction)"""
+        from pydantic import ValidationError
+        with pytest.raises(ValidationError, match="GitLab URL is required"):
+            SecurityAssistantConfig(
+                gitlab=GitLabConfig(enabled=True, url=None)
+            )
     
     def test_config_validate_invalid_log_level(self):
-        """Test validation with invalid log level"""
-        config = SecurityAssistantConfig()
-        config.log_level = 'INVALID'
-        
-        errors = config.validate()
-        
-        assert len(errors) > 0
-        assert any("log_level" in e for e in errors)
+        """Test validation with invalid log level (Pydantic validates at construction)"""
+        from pydantic import ValidationError
+        with pytest.raises(ValidationError):
+            SecurityAssistantConfig(log_level='INVALID')
 
 
 class TestConfigManager:
@@ -352,7 +341,8 @@ class TestConfigManager:
             os.unlink(temp_path)
     
     def test_config_manager_validation_error(self):
-        """Test validation error during load"""
+        """Test validation error during load (Pydantic raises ValidationError)"""
+        from pydantic import ValidationError
         data = {
             'bandit': {'enabled': False},
             'semgrep': {'enabled': False},
@@ -366,7 +356,7 @@ class TestConfigManager:
         try:
             manager = ConfigManager()
             
-            with pytest.raises(ValueError, match="validation failed"):
+            with pytest.raises(ValidationError, match="At least one scanner must be enabled"):
                 manager.load_config(config_file=temp_path, use_env=False)
         finally:
             os.unlink(temp_path)

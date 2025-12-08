@@ -147,10 +147,10 @@ class GitLabAPI:
             rate_limit_config: Rate limiting configuration
         """
         self.gitlab_url = gitlab_url or os.getenv("GITLAB_URL", "https://gitlab.com")
-        self.private_token = private_token or os.getenv("GITLAB_TOKEN")
+        self.private_token = private_token or os.getenv("GITLAB_TOKEN") or os.getenv("GITLAB_PERSONAL_TOKEN")
         
         if not self.private_token:
-            raise GitLabAuthError("GitLab token not provided. Set GITLAB_TOKEN environment variable.")
+            raise GitLabAuthError("GitLab token not provided. Set GITLAB_TOKEN or GITLAB_PERSONAL_TOKEN environment variable.")
         
         self.api_url = f"{self.gitlab_url}/api/v4"
         self.rate_limiter = RateLimiter(rate_limit_config or RateLimitConfig())

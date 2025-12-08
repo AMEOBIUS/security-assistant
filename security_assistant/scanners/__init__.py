@@ -3,11 +3,25 @@ Security scanners package.
 Contains implementations for various security scanning tools.
 """
 
-from .bandit_scanner import BanditScanner, BanditFinding, ScanResult
+from .base_scanner import (
+    BaseScanner,
+    ScannerConfig,
+    ScannerError,
+    ScannerNotInstalledError,
+)
+from .bandit_scanner import (
+    BanditScanner,
+    BanditFinding,
+    ScanResult,
+    BanditScannerError,
+    BanditNotInstalledError,
+)
 from .semgrep_scanner import (
     SemgrepScanner,
     SemgrepFinding,
-    SemgrepScanResult
+    SemgrepScanResult,
+    SemgrepScannerError,
+    SemgrepNotInstalledError,
 )
 from .trivy_scanner import (
     TrivyScanner,
@@ -20,12 +34,24 @@ from .trivy_scanner import (
 )
 
 __all__ = [
+    # Base
+    'BaseScanner',
+    'ScannerConfig',
+    'ScannerError',
+    'ScannerNotInstalledError',
+    # Bandit
     'BanditScanner',
     'BanditFinding',
     'ScanResult',
+    'BanditScannerError',
+    'BanditNotInstalledError',
+    # Semgrep
     'SemgrepScanner',
     'SemgrepFinding',
     'SemgrepScanResult',
+    'SemgrepScannerError',
+    'SemgrepNotInstalledError',
+    # Trivy
     'TrivyScanner',
     'TrivyScannerError',
     'TrivyNotInstalledError',

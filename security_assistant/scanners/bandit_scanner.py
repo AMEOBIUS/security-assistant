@@ -5,25 +5,22 @@ Converts findings to GitLab issue format.
 
 Checked: bandit@1.7.5+ (Nov 2025) - stable, no critical CVEs
 Alternative: ruff (10-100x faster, includes all Bandit rules)
+
+Refactored: Session 47 - Now extends BaseScanner
 """
 
-import os
 import json
 import logging
-import subprocess  # For executing bandit CLI
-from typing import List, Dict, Optional, Any
+import subprocess  # Kept for backward compatibility with tests
+from typing import List, Dict, Optional
 from dataclasses import dataclass, field
 from pathlib import Path
 from datetime import datetime
 
+from .base_scanner import BaseScanner, ScannerConfig, ScannerNotInstalledError
 from ..gitlab_api import IssueData
 
 
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
 logger = logging.getLogger(__name__)
 
 
@@ -95,12 +92,12 @@ class BanditScannerError(Exception):
     pass
 
 
-class BanditNotInstalledError(BanditScannerError):
+class BanditNotInstalledError(ScannerNotInstalledError):
     """Bandit is not installed."""
     pass
 
 
-class BanditScanner:
+class BanditScanner(BaseScanner[BanditFinding, ScanResult]):
     """
     Bandit security scanner integration.
     
@@ -109,13 +106,19 @@ class BanditScanner:
     - Parse Bandit JSON output
     - Convert findings to GitLab issues
     - Filter by severity and confidence
+    
+    Extends BaseScanner for common functionality.
     """
+    
+    CONFIDENCE_LEVELS = {"LOW": 1, "MEDIUM": 2, "HIGH": 3}
     
     def __init__(
         self,
         min_severity: str = "LOW",
         min_confidence: str = "LOW",
-        exclude_dirs: Optional[List[str]] = None
+        exclude_dirs: Optional[List[str]] = None,
+        config: Optional[ScannerConfig] = None,
+        **kwargs
     ):
         """
         Initialize Bandit scanner.
@@ -124,144 +127,62 @@ class BanditScanner:
             min_severity: Minimum severity to report (LOW, MEDIUM, HIGH)
             min_confidence: Minimum confidence to report (LOW, MEDIUM, HIGH)
             exclude_dirs: Directories to exclude from scanning
+            config: Scanner configuration (optional)
         """
-        self.min_severity = min_severity
         self.min_confidence = min_confidence
-        self.exclude_dirs = exclude_dirs or [
-            "venv", ".venv", "env", ".env",
-            "node_modules", ".git", "__pycache__",
-            "build", "dist", ".tox"
-        ]
         
-        # Verify Bandit is installed
-        if not self._check_bandit_installed():
-            raise BanditNotInstalledError(
-                "Bandit is not installed. Install with: pip install bandit"
+        # Build config
+        if config is None:
+            config = ScannerConfig(
+                min_severity=min_severity,
+                exclude_dirs=exclude_dirs or [
+                    "venv", ".venv", "env", ".env",
+                    "node_modules", ".git", "__pycache__",
+                    "build", "dist", ".tox"
+                ]
             )
         
-        logger.info(f"Bandit scanner initialized (min_severity={min_severity}, min_confidence={min_confidence})")
+        # Call parent constructor (handles installation check)
+        super().__init__(config=config, **kwargs)
+        
+        logger.info(f"Bandit scanner initialized (min_confidence={min_confidence})")
     
-    def _check_bandit_installed(self) -> bool:
-        """Check if Bandit is installed."""
-        try:
-            result = subprocess.run(
-                ["bandit", "--version"],
-                capture_output=True,
-                text=True,
-                timeout=5
-            )
-            return result.returncode == 0
-        except (subprocess.SubprocessError, FileNotFoundError):
-            return False
+    @property
+    def name(self) -> str:
+        return "bandit"
     
-    def scan_file(self, file_path: str) -> ScanResult:
-        """
-        Scan a single Python file.
-        
-        Args:
-            file_path: Path to Python file
-            
-        Returns:
-            ScanResult with findings
-            
-        Raises:
-            BanditScannerError: On scan errors
-            
-        Example:
-            >>> scanner = BanditScanner(min_severity="MEDIUM")
-            >>> result = scanner.scan_file("app.py")
-            >>> print(f"Found {len(result.findings)} issues")
-        """
-        if not os.path.exists(file_path):
-            raise BanditScannerError(f"File not found: {file_path}")
-        
-        if not file_path.endswith('.py'):
-            raise BanditScannerError(f"Not a Python file: {file_path}")
-        
-        logger.info(f"Scanning file: {file_path}")
-        
-        return self._run_bandit([file_path])
+    @property
+    def command(self) -> str:
+        return "bandit"
     
-    def scan_directory(self, directory_path: str, recursive: bool = True) -> ScanResult:
-        """
-        Scan a directory for Python files.
-        
-        Args:
-            directory_path: Path to directory
-            recursive: Scan subdirectories
-            
-        Returns:
-            ScanResult with findings
-            
-        Raises:
-            BanditScannerError: On scan errors
-            
-        Example:
-            >>> scanner = BanditScanner()
-            >>> result = scanner.scan_directory("src/", recursive=True)
-            >>> print(f"Scanned {result.files_scanned} files")
-        """
-        if not os.path.exists(directory_path):
-            raise BanditScannerError(f"Directory not found: {directory_path}")
-        
-        if not os.path.isdir(directory_path):
-            raise BanditScannerError(f"Not a directory: {directory_path}")
-        
-        logger.info(f"Scanning directory: {directory_path} (recursive={recursive})")
-        
-        args = [directory_path]
-        if recursive:
-            args.append("-r")
-        
-        return self._run_bandit(args)
+    def _get_not_installed_error(self) -> BanditNotInstalledError:
+        return BanditNotInstalledError(
+            "Bandit is not installed. Install with: pip install bandit"
+        )
     
-    def _run_bandit(self, targets: List[str]) -> ScanResult:
-        """
-        Run Bandit scanner on targets.
-        
-        Args:
-            targets: List of files/directories to scan
-            
-        Returns:
-            ScanResult with findings
-        """
-        # Build Bandit command
+    def _build_command(self, targets: List[str], **kwargs) -> List[str]:
+        """Build Bandit command with arguments."""
         cmd = [
             "bandit",
-            "-f", "json",  # JSON output
-            "-ll",  # Show only issues with severity >= LOW
+            "-f", "json",
+            "-ll",
         ]
         
         # Add exclusions
-        if self.exclude_dirs:
-            for exclude in self.exclude_dirs:
+        if self.config.exclude_dirs:
+            for exclude in self.config.exclude_dirs:
                 cmd.extend(["-x", exclude])
         
-        # Add targets
+        # Add recursive flag if present
+        if kwargs.get('recursive', True):
+            cmd.append("-r")
+        
         cmd.extend(targets)
-        
-        logger.debug(f"Running command: {' '.join(cmd)}")
-        
-        try:
-            # Run Bandit
-            result = subprocess.run(
-                cmd,
-                capture_output=True,
-                text=True,
-                timeout=300  # 5 minute timeout
-            )
-            
-            # Bandit returns exit code 1 if issues found, which is expected
-            if result.returncode not in [0, 1]:
-                raise BanditScannerError(f"Bandit failed with exit code {result.returncode}: {result.stderr}")
-            
-            # Parse JSON output
-            return self._parse_bandit_output(result.stdout)
-            
-        except subprocess.TimeoutExpired:
-            raise BanditScannerError("Bandit scan timeout (>5 minutes)")
-        except subprocess.SubprocessError as e:
-            raise BanditScannerError(f"Failed to run Bandit: {str(e)}")
+        return cmd
+    
+    def _parse_output(self, raw: str) -> ScanResult:
+        """Parse Bandit JSON output."""
+        return self._parse_bandit_output(raw)
     
     def _parse_bandit_output(self, json_output: str) -> ScanResult:
         """
@@ -330,17 +251,23 @@ class BanditScanner:
         Returns:
             True if finding should be included
         """
-        severity_levels = {"LOW": 1, "MEDIUM": 2, "HIGH": 3}
-        confidence_levels = {"LOW": 1, "MEDIUM": 2, "HIGH": 3}
+        # Use parent class severity check
+        if not super()._should_include_finding(finding.severity):
+            return False
         
-        min_sev_level = severity_levels.get(self.min_severity, 1)
-        min_conf_level = confidence_levels.get(self.min_confidence, 1)
+        # Additional confidence check for Bandit
+        min_conf_level = self.CONFIDENCE_LEVELS.get(self.min_confidence, 1)
+        finding_conf_level = self.CONFIDENCE_LEVELS.get(finding.confidence, 1)
         
-        finding_sev_level = severity_levels.get(finding.severity, 1)
-        finding_conf_level = confidence_levels.get(finding.confidence, 1)
-        
-        return (finding_sev_level >= min_sev_level and 
-                finding_conf_level >= min_conf_level)
+        return finding_conf_level >= min_conf_level
+    
+    def _get_findings_from_result(self, result: ScanResult) -> List[BanditFinding]:
+        """Extract findings list from scan result."""
+        return result.findings
+    
+    def _get_finding_file(self, finding: BanditFinding) -> str:
+        """Get file path from finding."""
+        return finding.filename
     
     def finding_to_issue(
         self,

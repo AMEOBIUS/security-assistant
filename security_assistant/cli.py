@@ -233,8 +233,13 @@ def cmd_scan(args: argparse.Namespace) -> int:
         
         # Run scan
         if len(targets) == 1:
+            target_path = Path(targets[0])
             logger.info("🔍 Starting security scan of %s...", targets[0])
-            result = orchestrator.scan_directory(targets[0])
+            
+            if target_path.is_file():
+                result = orchestrator.scan_file(targets[0])
+            else:
+                result = orchestrator.scan_directory(targets[0])
             
             # Wrap in list for consistent reporting
             results = [result]
