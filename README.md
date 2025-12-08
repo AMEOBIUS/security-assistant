@@ -36,6 +36,11 @@ security-assistant scan .
 ### 3. View Report
 Open `security-reports/report.html` in your browser to see the interactive dashboard.
 
+<!-- TODO: Add screenshot when available
+![Security Assistant Dashboard](docs/assets/dashboard-screenshot.png)
+*Interactive HTML report with KEV enrichment, reachability analysis, and remediation guidance*
+-->
+
 ---
 
 ## 🏗️ How It Works
