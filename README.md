@@ -12,13 +12,13 @@
 ### 🎯 Who is this for?
 *   **Developers:** Get immediate security feedback without waiting for the CI pipeline.
 *   **SecOps:** Get a unified report from multiple tools without writing glue code.
-*   **Startups:** Access enterprise security features (SAST, SCA, Secrets) for $0.
+*   **Startups:** Access enterprise security features (SAST, SCA, Secrets) for free.
 
 ---
 
 ## ⚡ Quick Start
 
-Get running in seconds.
+Get running in seconds. **Works on Linux/macOS/WSL; Windows via PowerShell is supported.**
 
 ### 1. Install
 ```bash
@@ -109,6 +109,7 @@ jobs:
         uses: github/codeql-action/upload-sarif@v2
         with:
           sarif_file: security-reports/report.sarif
+        # Results appear in GitHub Security tab
 ```
 
 ### GitLab CI
@@ -121,6 +122,7 @@ security_scan:
   artifacts:
     reports:
       codequality: security-reports/report.json
+      # Results appear in GitLab Code Quality widget
 ```
 
 ---
