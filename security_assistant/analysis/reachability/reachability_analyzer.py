@@ -6,8 +6,6 @@ Integrates import tracking and call graph analysis to determine finding reachabi
 """
 
 import logging
-from typing import Dict, Any, Optional
-from pathlib import Path
 from dataclasses import dataclass
 
 from .import_tracker import ImportTracker

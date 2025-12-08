@@ -10,7 +10,6 @@ Provides parallel scanner execution coordination with:
 import logging
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Dict, Set, Optional, Any, List
-from pathlib import Path
 from enum import Enum
 
 logger = logging.getLogger(__name__)

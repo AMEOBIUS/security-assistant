@@ -7,7 +7,6 @@ Checks system health, dependencies, and configuration.
 import shutil
 import sys
 import platform
-from typing import Dict, Tuple
 import logging
 
 # Force UTF-8 output for Windows consoles

@@ -12,8 +12,6 @@ Refactored: Session 47 - Now extends BaseScanner
 
 import json
 import logging
-import os  # Kept for backward compatibility with tests
-import subprocess  # Kept for backward compatibility with tests
 from typing import List, Dict, Optional, Any, Set
 from dataclasses import dataclass, field
 from pathlib import Path

@@ -12,10 +12,8 @@ from typing import List, Dict, Tuple, Optional, Any
 from pathlib import Path
 from dataclasses import dataclass
 import numpy as np
-import pandas as pd
 from datetime import datetime
 
-from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score

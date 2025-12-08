@@ -31,7 +31,6 @@ from typing import List, Optional, Dict, Any, Set
 from dataclasses import dataclass, field
 from enum import Enum
 
-from .base_scanner import BaseScanner, ScannerConfig, ScannerNotInstalledError
 from ..gitlab_api import IssueData
 
 

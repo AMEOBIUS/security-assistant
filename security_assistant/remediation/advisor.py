@@ -8,7 +8,6 @@ based on detected vulnerabilities.
 from typing import List, Dict, Optional, Any
 from dataclasses import dataclass, field
 import logging
-import os
 from pathlib import Path
 
 try:

@@ -9,7 +9,6 @@ Version: 1.0.0 (Session 47 Refactoring)
 import logging
 from typing import Dict, Type
 
-from .base_reporter import BaseReporter, ReportFormat
 
 logger = logging.getLogger(__name__)
 

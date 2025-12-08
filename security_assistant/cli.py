@@ -30,7 +30,6 @@ import sys
 import argparse
 import logging
 from pathlib import Path
-from typing import List, Optional
 
 from security_assistant.orchestrator import ScanOrchestrator, ScannerType
 from security_assistant.scanners.bandit_scanner import BanditScanner
@@ -164,9 +163,12 @@ def cmd_scan(args: argparse.Namespace) -> int:
             config.semgrep.enabled = True
             config.trivy.enabled = True
             # Ensure analysis features are on (unless explicitly disabled)
-            if not args.no_reachability: args.no_reachability = False
-            if not args.no_kev: args.no_kev = False
-            if not args.no_fp_detection: args.no_fp_detection = False
+            if not args.no_reachability:
+ args.no_reachability = False
+            if not args.no_kev:
+ args.no_kev = False
+            if not args.no_fp_detection:
+ args.no_fp_detection = False
         elif args.preset == 'ci':
             # Optimized for CI/CD
             config.report.formats = [ReportFormat.SARIF, ReportFormat.JSON]

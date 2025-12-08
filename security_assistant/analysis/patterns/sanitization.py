@@ -13,7 +13,6 @@ Version: 1.0.0
 """
 
 import re
-from typing import Optional
 
 
 class SanitizationPattern:
