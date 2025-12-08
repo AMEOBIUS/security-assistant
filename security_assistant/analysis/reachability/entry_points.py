@@ -14,7 +14,7 @@ Version: 1.0.0
 
 import ast
 import logging
-from typing import List, Set
+from typing import List, Set, Optional
 from pathlib import Path
 
 from security_assistant.analysis.reachability.ast_parser import ASTParser

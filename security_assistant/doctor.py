@@ -36,6 +36,7 @@ def check_python_version() -> Tuple[bool, str]:
 def check_config() -> Tuple[bool, str]:
     """Check configuration file."""
     from pathlib import Path
+from typing import Tuple
     if Path(".env").exists():
         return True, "✅ .env file exists"
     elif Path("security-assistant.yaml").exists():
