@@ -12,5 +12,5 @@ if len(user_input) > MAX_LEN:
 # 2. Use simple regex or third-party safe library
 # pip install google-re2
 # import re2
-# pattern = re2.compile(r"(a+)+$") 
+# pattern = re2.compile(r"(a+)+$")
 # pattern.match(user_input) # Safe, fails fast

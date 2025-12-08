@@ -3,6 +3,7 @@
 
 # SECURE (using html.escape):
 import html
+
 safe_input = html.escape(user_input)
 return f"<h1>Hello, {safe_input}</h1>"
 

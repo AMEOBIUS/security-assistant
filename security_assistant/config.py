@@ -9,18 +9,18 @@ This module provides centralized configuration management with:
 - Automatic JSON schema generation
 """
 
-import os
 import json
+import os
+from enum import Enum
 from pathlib import Path
 from typing import Any, List, Optional, Union
-from enum import Enum
 
 from pydantic import (
     BaseModel,
+    ConfigDict,
     Field,
     field_validator,
     model_validator,
-    ConfigDict,
 )
 
 try:
@@ -36,6 +36,7 @@ except ImportError:
 
 class DeduplicationStrategy(str, Enum):
     """Deduplication strategies."""
+
     LOCATION = "location"
     CONTENT = "content"
     BOTH = "both"
@@ -43,6 +44,7 @@ class DeduplicationStrategy(str, Enum):
 
 class ReportFormat(str, Enum):
     """Report output formats."""
+
     JSON = "json"
     HTML = "html"
     MARKDOWN = "markdown"
@@ -52,6 +54,7 @@ class ReportFormat(str, Enum):
 
 class ScannerConfig(BaseModel):
     """Base configuration for scanners."""
+
     model_config = ConfigDict(extra="forbid", validate_default=True)
 
     enabled: bool = True
@@ -66,16 +69,25 @@ class ScannerConfig(BaseModel):
 
 class BanditConfig(ScannerConfig):
     """Bandit scanner configuration."""
+
     severity_level: str = Field(default="low", pattern="^(low|medium|high)$")
     confidence_level: str = Field(default="low", pattern="^(low|medium|high)$")
     exclude_dirs: List[str] = Field(
-        default_factory=lambda: ["tests", "test", ".git", ".venv", "venv", "node_modules"]
+        default_factory=lambda: [
+            "tests",
+            "test",
+            ".git",
+            ".venv",
+            "venv",
+            "node_modules",
+        ]
     )
     skip_tests: List[str] = Field(default_factory=list)
 
 
 class SemgrepConfig(ScannerConfig):
     """Semgrep scanner configuration."""
+
     extra_args: List[str] = Field(default_factory=lambda: ["--metrics=off"])
     rules: List[str] = Field(default_factory=lambda: ["auto"])
     exclude_rules: List[str] = Field(default_factory=list)
@@ -85,6 +97,7 @@ class SemgrepConfig(ScannerConfig):
 
 class TrivyConfig(ScannerConfig):
     """Trivy scanner configuration."""
+
     severity: List[str] = Field(
         default_factory=lambda: ["CRITICAL", "HIGH", "MEDIUM", "LOW"]
     )
@@ -114,6 +127,7 @@ class TrivyConfig(ScannerConfig):
 
 class OrchestratorConfig(BaseModel):
     """Orchestrator configuration."""
+
     model_config = ConfigDict(extra="forbid", validate_default=True)
 
     deduplication_strategy: DeduplicationStrategy = DeduplicationStrategy.BOTH
@@ -124,6 +138,7 @@ class OrchestratorConfig(BaseModel):
 
 class ReportConfig(BaseModel):
     """Report generation configuration."""
+
     model_config = ConfigDict(extra="forbid", validate_default=True)
 
     formats: List[ReportFormat] = Field(
@@ -137,6 +152,7 @@ class ReportConfig(BaseModel):
 
 class GitLabConfig(BaseModel):
     """GitLab integration configuration."""
+
     model_config = ConfigDict(extra="forbid", validate_default=True)
 
     enabled: bool = False
@@ -163,6 +179,7 @@ class GitLabConfig(BaseModel):
 
 class ThresholdConfig(BaseModel):
     """Severity threshold configuration."""
+
     model_config = ConfigDict(extra="forbid", validate_default=True)
 
     fail_on_critical: bool = True
@@ -175,6 +192,7 @@ class ThresholdConfig(BaseModel):
 
 class SecurityAssistantConfig(BaseModel):
     """Main configuration for Security Assistant."""
+
     model_config = ConfigDict(
         extra="forbid",
         validate_default=True,
@@ -191,7 +209,9 @@ class SecurityAssistantConfig(BaseModel):
 
     scan_target: str = Field(default=".", min_length=1)
     verbose: bool = False
-    log_level: str = Field(default="INFO", pattern="^(DEBUG|INFO|WARNING|ERROR|CRITICAL)$")
+    log_level: str = Field(
+        default="INFO", pattern="^(DEBUG|INFO|WARNING|ERROR|CRITICAL)$"
+    )
     log_file: Optional[str] = None
 
     @model_validator(mode="after")
@@ -206,10 +226,10 @@ class SecurityAssistantConfig(BaseModel):
 
     def validate(self) -> List[str]:
         """Validate configuration (backward compatibility).
-        
+
         Note: Pydantic validates automatically on creation.
         This method is kept for backward compatibility.
-        
+
         Returns:
             Empty list (validation happens at construction time)
         """
@@ -258,11 +278,12 @@ class SecurityAssistantConfig(BaseModel):
                 raise ValueError(error_msg)
 
             import logging
+
             logger = logging.getLogger(__name__)
             for warning in validation_result.warnings:
                 logger.warning(f"Config validation warning: {warning}")
 
-        with open(path, "r") as f:
+        with open(path) as f:
             if path.suffix in [".yaml", ".yml"]:
                 if yaml is None:
                     raise ImportError(
@@ -279,7 +300,7 @@ class SecurityAssistantConfig(BaseModel):
     @classmethod
     def from_env(cls) -> "SecurityAssistantConfig":
         """Create configuration from environment variables.
-        
+
         Environment variables (SA_ prefix):
         - SA_BANDIT_ENABLED, SA_SEMGREP_ENABLED, SA_TRIVY_ENABLED
         - SA_DEDUP_STRATEGY, SA_MAX_WORKERS
@@ -328,7 +349,9 @@ class SecurityAssistantConfig(BaseModel):
         if os.getenv("SA_GITLAB_TOKEN"):
             data.setdefault("gitlab", {})["token"] = os.getenv("SA_GITLAB_TOKEN")
         if os.getenv("SA_GITLAB_PROJECT_ID"):
-            data.setdefault("gitlab", {})["project_id"] = os.getenv("SA_GITLAB_PROJECT_ID")
+            data.setdefault("gitlab", {})["project_id"] = os.getenv(
+                "SA_GITLAB_PROJECT_ID"
+            )
         if os.getenv("SA_GITLAB_CREATE_ISSUES"):
             data.setdefault("gitlab", {})["create_issues"] = (
                 os.getenv("SA_GITLAB_CREATE_ISSUES", "").lower() == "true"
@@ -399,7 +422,7 @@ class ConfigManager:
         defaults: Optional[SecurityAssistantConfig] = None,
     ) -> SecurityAssistantConfig:
         """Load configuration from multiple sources.
-        
+
         Priority (highest to lowest):
         1. Environment variables
         2. Configuration file

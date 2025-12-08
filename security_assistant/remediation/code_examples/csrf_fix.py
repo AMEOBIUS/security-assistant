@@ -18,5 +18,5 @@ csrf = CSRFProtect(app)
 
 # SECURE (ensure custom header):
 # Many APIs require a custom header like X-Requested-With to prevent CSRF
-headers = {'X-Requested-With': 'XMLHttpRequest'}
-requests.post('http://api.com/update', data=data, headers=headers)
+headers = {"X-Requested-With": "XMLHttpRequest"}
+requests.post("http://api.com/update", data=data, headers=headers)

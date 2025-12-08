@@ -8,42 +8,44 @@ Version: 1.0.0
 
 import json
 import logging
-from typing import Any, Dict, Optional
 from pathlib import Path
+from typing import Any, Dict, Optional
 
-from .base_reporter import BaseReporter, ReportFormat
 from ..orchestrator import FindingSeverity
+from .base_reporter import BaseReporter, ReportFormat
 
 logger = logging.getLogger(__name__)
+
 
 class HTMLReporter(BaseReporter):
     """
     Generates interactive HTML reports.
     Uses built-in HTML generation or Jinja2 templates if available.
     """
-    
+
     def __init__(
         self,
         include_code_snippets: bool = True,
         include_remediation: bool = True,
         max_findings: Optional[int] = None,
         include_charts: bool = True,
-        template_dir: Optional[str] = None
+        template_dir: Optional[str] = None,
     ):
         super().__init__(include_code_snippets, include_remediation, max_findings)
         self.include_charts = include_charts
         self.template_dir = Path(template_dir) if template_dir else None
-        
+
         # Initialize Jinja2 if available
         self.jinja_env = None
         try:
             from jinja2 import Environment, FileSystemLoader, select_autoescape
+
             if self.template_dir and self.template_dir.exists():
                 self.jinja_env = Environment(
                     loader=FileSystemLoader(str(self.template_dir)),
-                    autoescape=select_autoescape(['html', 'xml']),
+                    autoescape=select_autoescape(["html", "xml"]),
                     trim_blocks=True,
-                    lstrip_blocks=True
+                    lstrip_blocks=True,
                 )
         except ImportError:
             pass
@@ -51,37 +53,41 @@ class HTMLReporter(BaseReporter):
     @property
     def format(self) -> ReportFormat:
         return ReportFormat.HTML
-    
+
     def generate(self, result: Any, **kwargs) -> str:
         """
         Generate HTML report.
-        
+
         Args:
             result: OrchestrationResult
             **kwargs: Template variables
-        
+
         Returns:
             HTML content
         """
-        context = self._prepare_context(result, kwargs.get('title'))
-        
+        context = self._prepare_context(result, kwargs.get("title"))
+
         # Add HTML-specific context
-        context.update({
-            "include_charts": self.include_charts,
-            "chart_script": self._generate_chart_script(result) if self.include_charts else "",
-            "css_content": self._get_css_content()
-        })
+        context.update(
+            {
+                "include_charts": self.include_charts,
+                "chart_script": self._generate_chart_script(result)
+                if self.include_charts
+                else "",
+                "css_content": self._get_css_content(),
+            }
+        )
         context.update(kwargs)
 
         # Use Jinja2 template if available
         if self.jinja_env:
-            template_name = kwargs.get('template_name', 'default.html')
+            template_name = kwargs.get("template_name", "default.html")
             try:
                 template = self.jinja_env.get_template(f"html/{template_name}")
                 return template.render(**context)
             except Exception as e:
                 logger.warning(f"Failed to render template {template_name}: {e}")
-        
+
         # Fallback to built-in generation
         return self._generate_builtin_html(context)
 
@@ -91,12 +97,12 @@ class HTMLReporter(BaseReporter):
             severity.value: result.findings_by_severity.get(severity, 0)
             for severity in FindingSeverity
         }
-        
+
         scanner_data = {
             scanner.value: count
             for scanner, count in result.findings_by_scanner.items()
         }
-        
+
         return f"""
 // Severity Chart
 const severityCtx = document.getElementById('severityChart').getContext('2d');
@@ -165,26 +171,26 @@ new Chart(scannerCtx, {{
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>{context['title']}</title>
-    <style>{context['css_content']}</style>
-    {'''<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>''' if context['include_charts'] else ''}
+    <title>{context["title"]}</title>
+    <style>{context["css_content"]}</style>
+    {'''<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>''' if context["include_charts"] else ""}
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>🔒 {context['title']}</h1>
-            <p>{context['subtitle']}</p>
+            <h1>🔒 {context["title"]}</h1>
+            <p>{context["subtitle"]}</p>
         </header>
         <div class="content">
             <div class="summary">
-                <div class="stat-card"><h3>Total Findings</h3><div class="value">{context['summary']['total_findings']}</div></div>
-                <div class="stat-card"><h3>Critical</h3><div class="value">{context['summary']['critical_count']}</div></div>
-                <div class="stat-card"><h3>High</h3><div class="value">{context['summary']['high_count']}</div></div>
+                <div class="stat-card"><h3>Total Findings</h3><div class="value">{context["summary"]["total_findings"]}</div></div>
+                <div class="stat-card"><h3>Critical</h3><div class="value">{context["summary"]["critical_count"]}</div></div>
+                <div class="stat-card"><h3>High</h3><div class="value">{context["summary"]["high_count"]}</div></div>
             </div>
             """
         ]
 
-        if context['include_charts']:
+        if context["include_charts"]:
             html.append(f"""
             <div class="section">
                 <h2>📈 Visual Analytics</h2>
@@ -193,7 +199,7 @@ new Chart(scannerCtx, {{
                     <div class="chart-container" style="flex: 1;"><canvas id="scannerChart"></canvas></div>
                 </div>
             </div>
-            <script>{context['chart_script']}</script>
+            <script>{context["chart_script"]}</script>
             """)
 
         html.append("""
@@ -212,41 +218,45 @@ new Chart(scannerCtx, {{
                     <tbody>
         """)
 
-        for idx, finding in enumerate(context['findings']):
-            sev_lower = finding['severity'].lower()
+        for idx, finding in enumerate(context["findings"]):
+            sev_lower = finding["severity"].lower()
             html.append(f"""
                         <tr onclick="document.getElementById('details-{idx}').style.display = document.getElementById('details-{idx}').style.display === 'block' ? 'none' : 'block'" style="cursor: pointer;">
-                            <td><span class="severity-badge severity-{sev_lower}">{finding['severity']}</span></td>
-                            <td>{finding['title']}</td>
-                            <td>{finding['file_name']}</td>
-                            <td>{finding['line_start']}</td>
-                            <td>{finding['scanner']}</td>
+                            <td><span class="severity-badge severity-{sev_lower}">{finding["severity"]}</span></td>
+                            <td>{finding["title"]}</td>
+                            <td>{finding["file_name"]}</td>
+                            <td>{finding["line_start"]}</td>
+                            <td>{finding["scanner"]}</td>
                         </tr>
                         <tr>
                             <td colspan="5" style="padding: 0;">
                                 <div id="details-{idx}" class="finding-details">
-                                    <p><strong>Description:</strong> {finding['description']}</p>
-                                    <p><strong>Location:</strong> {finding['file_path']}:{finding['line_start']}</p>
+                                    <p><strong>Description:</strong> {finding["description"]}</p>
+                                    <p><strong>Location:</strong> {finding["file_path"]}:{finding["line_start"]}</p>
             """)
-            
-            if self.include_code_snippets and 'code_snippet' in finding:
+
+            if self.include_code_snippets and "code_snippet" in finding:
                 html.append(f"""
-                                    <div class="code-snippet"><pre>{finding['code_snippet']}</pre></div>
+                                    <div class="code-snippet"><pre>{finding["code_snippet"]}</pre></div>
                 """)
-            
+
             html.append("</div></td></tr>")
 
-        html.append("""
+        html.append(
+            """
                     </tbody>
                 </table>
             </div>
         </div>
         <footer>
-            <p>Generated by Security Assistant on """ + context['generated_at'] + """</p>
+            <p>Generated by Security Assistant on """
+            + context["generated_at"]
+            + """</p>
         </footer>
     </div>
 </body>
 </html>
-        """)
-        
+        """
+        )
+
         return "\n".join(html)

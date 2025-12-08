@@ -3,7 +3,7 @@
 # If username is {"$ne": null}, it returns the first user (usually admin)
 
 # SECURE:
-username = request.json.get('username')
+username = request.json.get("username")
 
 # 1. Type Check
 if not isinstance(username, str):

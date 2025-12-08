@@ -18,32 +18,32 @@ logger = logging.getLogger(__name__)
 class JSONReporter(BaseReporter):
     """
     Generate JSON reports.
-    
+
     Example:
         >>> reporter = JSONReporter()
         >>> json_content = reporter.generate(result)
         >>> data = json.loads(json_content)
     """
-    
+
     def __init__(self, indent: int = 2, **kwargs):
         """
         Initialize JSON reporter.
-        
+
         Args:
             indent: JSON indentation (default: 2)
             **kwargs: Base reporter options
         """
         super().__init__(**kwargs)
         self.indent = indent
-    
+
     @property
     def format(self) -> ReportFormat:
         return ReportFormat.JSON
-    
+
     def generate(self, result: Any, **kwargs) -> str:
         """Generate JSON report."""
-        context = self._prepare_context(result, kwargs.get('title'))
-        
+        context = self._prepare_context(result, kwargs.get("title"))
+
         # Add metadata
         report_data = {
             "metadata": {
@@ -59,5 +59,5 @@ class JSONReporter(BaseReporter):
             "scanner_breakdown": context["scanner_breakdown"],
             "findings": context["findings"],
         }
-        
+
         return json.dumps(report_data, indent=self.indent, default=str)

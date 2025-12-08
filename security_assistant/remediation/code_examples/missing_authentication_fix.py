@@ -4,12 +4,13 @@
 #     return render_template('admin.html')
 
 # SECURE (Flask-Login):
-from flask_login import login_required, current_user
+from flask_login import current_user, login_required
 
-@app.route('/admin')
+
+@app.route("/admin")
 @login_required
 def admin_panel():
     # Even if logged in, we must check authorization/access control!
     if not current_user.is_admin:
-         abort(403)
-    return render_template('admin.html')
+        abort(403)
+    return render_template("admin.html")

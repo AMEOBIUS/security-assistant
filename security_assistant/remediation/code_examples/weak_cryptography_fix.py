@@ -4,7 +4,6 @@
 
 # SECURE (Hashing for passwords):
 # pip install bcrypt
-import bcrypt
 
 # Hash a password
 # salt = bcrypt.gensalt()
@@ -16,6 +15,7 @@ import bcrypt
 
 # SECURE (Random):
 import secrets
+
 token = secrets.token_urlsafe(32)
 
 # VULNERABLE (Encryption):
@@ -23,6 +23,7 @@ token = secrets.token_urlsafe(32)
 
 # SECURE (Encryption):
 from cryptography.fernet import Fernet
+
 key = Fernet.generate_key()
 cipher_suite = Fernet(key)
 cipher_text = cipher_suite.encrypt(b"Secret data")

@@ -27,7 +27,7 @@ exclude = [
     "dist",
     "*.egg-info",
     # Exclude code examples (they're demonstrations, not production code)
-    "security_assistant/remediation/code_examples",
+    "**/remediation/code_examples/**",
 ]
 
 [lint.per-file-ignores]
@@ -35,6 +35,13 @@ exclude = [
 "__init__.py" = ["F401"]
 # Allow star imports in test files
 "tests/**/*.py" = ["F403", "F405"]
+# Allow ML naming conventions (X, y, X_train, etc.) and raise without from
+"security_assistant/ml/**/*.py" = ["N803", "N806", "B904"]
+# Allow raise without from in API/scanner error handling
+"security_assistant/gitlab_api.py" = ["B904"]
+"security_assistant/glab_cli.py" = ["B904"]
+"security_assistant/scanners/**/*.py" = ["B904"]
+"security_assistant/scheduler.py" = ["B904"]
 
 [format]
 # Use double quotes for strings

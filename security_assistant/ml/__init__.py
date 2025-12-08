@@ -14,9 +14,9 @@ Features:
 Version: 1.0.0
 """
 
+from .epss import EPSSClient
 from .features import FeatureExtractor
 from .scoring import MLScorer
-from .epss import EPSSClient
 
 __all__ = [
     "FeatureExtractor",

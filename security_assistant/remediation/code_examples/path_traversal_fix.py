@@ -16,5 +16,5 @@ real_path = os.path.realpath(full_path)
 if not real_path.startswith(os.path.realpath(BASE_DIR)):
     raise ValueError("Path traversal attempt detected")
 
-with open(real_path, "r") as f:
+with open(real_path) as f:
     data = f.read()

@@ -12,9 +12,6 @@ tree = ET.fromstring(xml_data)
 from lxml import etree
 
 parser = etree.XMLParser(
-    resolve_entities=False,
-    no_network=True,
-    dtd_validation=False,
-    load_dtd=False
+    resolve_entities=False, no_network=True, dtd_validation=False, load_dtd=False
 )
 tree = etree.fromstring(xml_data, parser=parser)

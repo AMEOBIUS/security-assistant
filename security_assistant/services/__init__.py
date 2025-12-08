@@ -11,12 +11,12 @@ Provides modular services extracted from the monolithic orchestrator:
 """
 
 from .deduplication import DeduplicationService, DeduplicationStrategy
-from .priority_calculator import PriorityCalculator
-from .finding_converter import FindingConverter
-from .ml_scoring_service import MLScoringService
 from .enrichment_service import EnrichmentService, EnrichmentType
-from .scan_coordinator_service import ScanCoordinatorService
+from .finding_converter import FindingConverter
 from .issue_converter import IssueConverter
+from .ml_scoring_service import MLScoringService
+from .priority_calculator import PriorityCalculator
+from .scan_coordinator_service import ScanCoordinatorService
 
 __all__ = [
     "DeduplicationService",
