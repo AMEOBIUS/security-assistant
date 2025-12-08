@@ -1,0 +1,229 @@
+name: Security Scan
+
+on:
+  pull_request:
+    branches:
+      - main
+      - master
+      - develop
+  push:
+    branches:
+      - main
+      - master
+  schedule:
+    - cron: '0 9 * * 1'
+  workflow_dispatch:
+    inputs:
+      scan_target:
+        description: 'Directory to scan'
+        required: false
+        default: '.'
+      enable_bandit:
+        description: 'Enable Bandit scanner'
+        required: false
+        default: 'true'
+      enable_semgrep:
+        description: 'Enable Semgrep scanner'
+        required: false
+        default: 'true'
+      enable_trivy:
+        description: 'Enable Trivy scanner'
+        required: false
+        default: 'true'
+      fail_on_critical:
+        description: 'Fail on critical findings'
+        required: false
+        default: 'true'
+
+env:
+  ENABLE_BANDIT: ${{ github.event.inputs.enable_bandit || 'true' }}
+  ENABLE_SEMGREP: ${{ github.event.inputs.enable_semgrep || 'true' }}
+  ENABLE_TRIVY: ${{ github.event.inputs.enable_trivy || 'true' }}
+  DEDUP_STRATEGY: 'both'
+  PRIORITY_THRESHOLD: '70'
+  MAX_ISSUES: '10'
+  SCAN_TARGET: ${{ github.event.inputs.scan_target || '.' }}
+  FAIL_ON_HIGH: 'true'
+  FAIL_ON_CRITICAL: ${{ github.event.inputs.fail_on_critical || 'true' }}
+
+jobs:
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    
+    permissions:
+      contents: read
+      security-events: write
+      issues: write
+      pull-requests: write
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      
+      - name: Install Bandit
+        if: env.ENABLE_BANDIT == 'true'
+        run: pip install bandit[toml]
+      
+      - name: Install Semgrep
+        if: env.ENABLE_SEMGREP == 'true'
+        run: pip install semgrep
+      
+      - name: Install Trivy
+        if: env.ENABLE_TRIVY == 'true'
+        run: |
+          wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | sudo apt-key add -
+          echo "deb https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main" | sudo tee -a /etc/apt/sources.list.d/trivy.list
+          sudo apt-get update
+          sudo apt-get install trivy
+      
+      - name: Create reports directory
+        run: mkdir -p security-reports
+      
+      - name: Run security scan
+        id: scan
+        run: |
+          python -c "
+          from security_assistant.orchestrator import ScanOrchestrator, ScannerType
+          from security_assistant.scanners.bandit_scanner import BanditScanner
+          from security_assistant.scanners.semgrep_scanner import SemgrepScanner
+          from security_assistant.scanners.trivy_scanner import TrivyScanner
+          import json
+          import os
+          
+          # Initialize orchestrator
+          orchestrator = ScanOrchestrator(
+              dedup_strategy=os.getenv('DEDUP_STRATEGY', 'both'),
+              max_workers=3
+          )
+          
+          # Enable scanners based on configuration
+          if os.getenv('ENABLE_BANDIT') == 'true':
+              print('Enabling Bandit scanner...')
+              orchestrator.enable_scanner(ScannerType.BANDIT, BanditScanner())
+          
+          if os.getenv('ENABLE_SEMGREP') == 'true':
+              print('Enabling Semgrep scanner...')
+              orchestrator.enable_scanner(ScannerType.SEMGREP, SemgrepScanner())
+          
+          if os.getenv('ENABLE_TRIVY') == 'true':
+              print('Enabling Trivy scanner...')
+              orchestrator.enable_scanner(ScannerType.TRIVY, TrivyScanner())
+          
+          # Run scan
+          scan_target = os.getenv('SCAN_TARGET', '.')
+          print(f'Scanning: {scan_target}')
+          result = orchestrator.scan_directory(scan_target)
+          
+          # Save results
+          results_data = {
+              'total_findings': len(result.all_findings),
+              'deduplicated_findings': len(result.deduplicated_findings),
+              'execution_time': result.execution_time_seconds,
+              'findings_by_severity': {k.value: v for k, v in result.findings_by_severity.items()},
+              'findings_by_scanner': {k.value: v for k, v in result.findings_by_scanner.items()},
+              'findings': [
+                  {
+                      'id': f.finding_id,
+                      'scanner': f.scanner.value,
+                      'severity': f.severity.value,
+                      'category': f.category,
+                      'file': f.file_path,
+                      'line_start': f.line_start,
+                      'line_end': f.line_end,
+                      'title': f.title,
+                      'description': f.description,
+                      'priority_score': f.priority_score,
+                      'cwe_ids': f.cwe_ids,
+                      'owasp_categories': f.owasp_categories
+                  }
+                  for f in result.deduplicated_findings
+              ]
+          }
+          
+          with open('security-reports/scan-results.json', 'w') as f:
+              json.dump(results_data, f, indent=2)
+          
+          print(f'✅ Scan complete: {len(result.deduplicated_findings)} findings')
+          print(f'Execution time: {result.execution_time_seconds:.2f}s')
+          print(f'Findings by severity: {result.findings_by_severity}')
+          
+          # Set outputs for GitHub Actions
+          with open(os.getenv('GITHUB_OUTPUT'), 'a') as f:
+              f.write(f'total_findings={len(result.deduplicated_findings)}\\n')
+              f.write(f'critical_count={result.findings_by_severity.get(\"CRITICAL\", 0)}\\n')
+              f.write(f'high_count={result.findings_by_severity.get(\"HIGH\", 0)}\\n')
+              f.write(f'medium_count={result.findings_by_severity.get(\"MEDIUM\", 0)}\\n')
+              f.write(f'low_count={result.findings_by_severity.get(\"LOW\", 0)}\\n')
+          "
+      
+      - name: Generate SARIF report
+        if: always()
+        run: |
+          python scripts/generate_sarif.py
+      
+      # NOTE: SARIF upload requires GitHub Advanced Security to be enabled
+      # If you see "Resource not accessible by integration" error, either:
+      # 1. Enable GitHub Advanced Security in repository settings
+      # 2. Or remove this step - reports will still be available in artifacts
+      - name: Upload SARIF to GitHub Security
+        if: always()
+        continue-on-error: true
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: security-reports/results.sarif
+          category: security-assistant
+      
+      - name: Generate HTML report
+        if: always()
+        run: |
+          python scripts/generate_html_report.py
+      
+      - name: Upload reports as artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-reports
+          path: security-reports/
+          retention-days: 30
+      
+      - name: Check severity thresholds
+        if: always()
+        run: |
+          python -c "
+          import json
+          import sys
+          import os
+          
+          with open('security-reports/scan-results.json', 'r') as f:
+              results = json.load(f)
+          
+          critical_count = results['findings_by_severity'].get('CRITICAL', 0)
+          high_count = results['findings_by_severity'].get('HIGH', 0)
+          
+          print(f'Critical findings: {critical_count}')
+          print(f'High findings: {high_count}')
+          
+          if os.getenv('FAIL_ON_CRITICAL') == 'true' and critical_count > 0:
+              print('❌ Pipeline failed: Critical severity findings detected')
+              sys.exit(1)
+          
+          if os.getenv('FAIL_ON_HIGH') == 'true' and high_count > 0:
+              print('❌ Pipeline failed: High severity findings detected')
+              sys.exit(1)
+          
+          print('✅ No blocking findings detected')
+          "

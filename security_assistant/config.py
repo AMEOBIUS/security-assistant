@@ -76,6 +76,7 @@ class BanditConfig(ScannerConfig):
 
 class SemgrepConfig(ScannerConfig):
     """Semgrep scanner configuration."""
+    extra_args: List[str] = Field(default_factory=lambda: ["--metrics=off"])
     rules: List[str] = Field(default_factory=lambda: ["auto"])
     exclude_rules: List[str] = Field(default_factory=list)
     max_memory: int = Field(default=5000, ge=100, le=50000)
