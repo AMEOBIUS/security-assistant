@@ -2,18 +2,16 @@
 Tests for security_assistant.scheduler module
 """
 
+from datetime import datetime
+from unittest.mock import Mock, patch
+
 import pytest
-import time
-from datetime import datetime, timezone
-from unittest.mock import Mock, patch, MagicMock
 
 from security_assistant.scheduler import (
+    APSCHEDULER_AVAILABLE,
     ScanSchedule,
     ScheduleManager,
-    ScheduleStatus,
-    APSCHEDULER_AVAILABLE
 )
-
 
 # Skip all tests if APScheduler is not available
 pytestmark = pytest.mark.skipif(
@@ -530,7 +528,6 @@ class TestScheduleManager:
         # Create schedule that runs every minute (standard cron format)
         # Note: APScheduler 3.x only supports 5-field cron (no seconds)
         # For testing, we'll use interval trigger instead
-        from apscheduler.triggers.interval import IntervalTrigger
         
         schedule = ScanSchedule(
             name="test_scan",

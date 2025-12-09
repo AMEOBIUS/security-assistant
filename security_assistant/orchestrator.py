@@ -29,6 +29,7 @@ from .scanners.semgrep_scanner import SemgrepScanner
 from .scanners.trivy_scanner import (
     TrivyScanner,
 )
+from .scanners.nuclei_scanner import NucleiScanner
 from .security_validator import MetaSecurityValidator
 
 # Import refactored services
@@ -51,6 +52,7 @@ class ScannerType(str, Enum):
     BANDIT = "bandit"
     SEMGREP = "semgrep"
     TRIVY = "trivy"
+    NUCLEI = "nuclei"
 
 
 class FindingSeverity(str, Enum):
@@ -435,6 +437,8 @@ class ScanOrchestrator:
                 scanner_instance = SemgrepScanner(**scanner_kwargs)
             elif scanner_type == ScannerType.TRIVY:
                 scanner_instance = TrivyScanner(**scanner_kwargs)
+            elif scanner_type == ScannerType.NUCLEI:
+                scanner_instance = NucleiScanner(**scanner_kwargs)
             else:
                 raise ValueError(f"Unknown scanner type: {scanner_type}")
 

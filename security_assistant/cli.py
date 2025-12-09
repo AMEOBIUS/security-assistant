@@ -37,10 +37,11 @@ from security_assistant.config import (
     ReportFormat,
     load_config,
 )
-from security_assistant.orchestrator import ScannerType, ScanOrchestrator
+from security_assistant.orchestrator import ScannerType, ScanOrchestrator, UnifiedFinding
 from security_assistant.scanners.bandit_scanner import BanditScanner
 from security_assistant.scanners.semgrep_scanner import SemgrepScanner
 from security_assistant.scanners.trivy_scanner import TrivyScanner
+from security_assistant.services.llm_service import LLMService
 
 __version__ = "1.0.0"
 
@@ -90,6 +91,11 @@ def cmd_scan(args: argparse.Namespace) -> int:
     try:
         # Load configuration
         config = load_config(config_file=args.config, use_env=not args.no_env)
+
+        # Override LLM settings
+        if getattr(args, 'llm', None):
+            from security_assistant.config import LLMProvider
+            config.llm.provider = LLMProvider(args.llm)
 
         # Determine targets
         targets = []
@@ -389,6 +395,37 @@ def cmd_scan(args: argparse.Namespace) -> int:
             )
             return 1
 
+        # LLM Explanation if requested
+        if getattr(args, 'explain', False) and dedup_count > 0:
+            import asyncio
+            try:
+                llm_service = LLMService(config)
+                if asyncio.run(llm_service.is_available()):
+                    # Explain top priority findings
+                    critical_findings = []
+                    for result in results:
+                        for f in result.deduplicated_findings:
+                            if f.severity.value in ["CRITICAL", "HIGH"]:
+                                critical_findings.append(f)
+                    
+                    # Sort by priority
+                    critical_findings.sort(key=lambda x: x.priority_score, reverse=True)
+                    
+                    if critical_findings:
+                        logger.info(f"\n🧠 Explaining top {min(3, len(critical_findings))} findings using {config.llm.provider}...")
+                        print("\n" + "="*50)
+                        
+                        for finding in critical_findings[:3]:
+                            print(f"\nFinding: {finding.title} ({finding.severity.value})")
+                            print(f"File: {finding.file_path}:{finding.line_start}")
+                            print("-" * 30)
+                            
+                            explanation = asyncio.run(llm_service.explain_finding(finding))
+                            print(explanation)
+                            print("-" * 50)
+            except Exception as e:
+                logger.error(f"Failed to explain findings: {e}")
+
         logger.info("✅ No blocking findings detected")
         return 0
 
@@ -503,6 +540,244 @@ def cmd_report(args: argparse.Namespace) -> int:
 
     except Exception as e:
         print(f"❌ Error: {e}")
+        return 1
+
+
+def cmd_poc(args: argparse.Namespace) -> int:
+    """
+    Generate a PoC for a finding.
+
+    Args:
+        args: Command-line arguments
+
+    Returns:
+        Exit code
+    """
+    import asyncio
+    import json
+    from security_assistant.poc import PoCGenerator, PoCError
+    from security_assistant.poc.enhancers.llm_enhancer import LLMEnhancer
+
+    try:
+        # Load configuration
+        config = load_config(config_file=args.config, use_env=True)
+
+        # Load report
+        report_path = Path(args.report)
+        if not report_path.exists():
+            logging.error(f"Report file not found: {report_path}")
+            return 1
+            
+        with open(report_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+            
+        # Find the finding
+        target_finding = None
+        findings = data.get("findings", [])
+        
+        for f in findings:
+            if f.get("id") == args.finding_id or f.get("finding_id") == args.finding_id:
+                target_finding = UnifiedFinding(
+                    finding_id=f.get("id") or f.get("finding_id"),
+                    scanner=ScannerType(f.get("scanner", "bandit")),
+                    severity=f.get("severity", "MEDIUM"),
+                    category=f.get("category", "security"),
+                    file_path=f.get("location", {}).get("file", f.get("file_path", "")),
+                    line_start=f.get("location", {}).get("line", f.get("line_start", 0)),
+                    line_end=f.get("location", {}).get("line", f.get("line_end", 0)),
+                    title=f.get("title", ""),
+                    description=f.get("description", ""),
+                    code_snippet=f.get("code", {}).get("snippet", f.get("code_snippet", ""))
+                )
+                break
+        
+        if not target_finding:
+            logging.error(f"Finding '{args.finding_id}' not found in {report_path}")
+            return 1
+
+        # Initialize LLM & Enhancer
+        llm_service = LLMService(config)
+        llm_enhancer = None
+        
+        if asyncio.run(llm_service.is_available()):
+            llm_enhancer = LLMEnhancer(llm_service)
+            print(f"🧠 Using LLM ({config.llm.provider}) for enhanced PoC generation...")
+        else:
+            print("⚠️ LLM not available. Using heuristic PoC generation.")
+
+        # Generate PoC
+        generator = PoCGenerator(llm_enhancer=llm_enhancer)
+        output_file = args.output
+        
+        if not output_file:
+            # Auto-name
+            ext = ".html" if "xss" in (target_finding.category or "").lower() else ".py"
+            output_file = f"poc_{target_finding.finding_id}{ext}"
+            
+        poc_code = asyncio.run(generator.generate(target_finding, output_path=output_file))
+        
+        print(f"✅ PoC generated successfully: {output_file}")
+        print("\n" + "="*40)
+        print(poc_code)
+        print("="*40 + "\n")
+        
+        return 0
+
+    except PoCError as e:
+        logging.error(f"PoC Generation failed: {e}")
+        return 1
+    except Exception as e:
+        logging.error(f"Unexpected error: {e}")
+        return 1
+
+
+def cmd_explain(args: argparse.Namespace) -> int:
+    """
+    Explain a finding using LLM.
+
+    Args:
+        args: Command-line arguments
+
+    Returns:
+        Exit code (0 = success, 1 = failure)
+    """
+    import asyncio
+    import json
+
+    try:
+        # Load configuration
+        config = load_config(config_file=args.config, use_env=True)
+        
+        # Initialize LLM Service
+        llm_service = LLMService(config)
+        
+        # Check if LLM is available
+        if not asyncio.run(llm_service.is_available()):
+            logging.error(f"LLM service is not available. Check your provider ({config.llm.provider}) and API key.")
+            return 1
+
+        # Load report
+        report_path = Path(args.report)
+        if not report_path.exists():
+            logging.error(f"Report file not found: {report_path}")
+            return 1
+            
+        with open(report_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+            
+        # Find the finding
+        target_finding = None
+        findings = data.get("findings", [])
+        
+        for f in findings:
+            if f.get("id") == args.finding_id or f.get("finding_id") == args.finding_id:
+                # Convert dict back to UnifiedFinding
+                target_finding = UnifiedFinding(
+                    finding_id=f.get("id") or f.get("finding_id"),
+                    scanner=ScannerType(f.get("scanner", "bandit")),
+                    severity=f.get("severity", "MEDIUM"),
+                    category=f.get("category", "security"),
+                    file_path=f.get("location", {}).get("file", f.get("file_path", "")),
+                    line_start=f.get("location", {}).get("line", f.get("line_start", 0)),
+                    line_end=f.get("location", {}).get("line", f.get("line_end", 0)),
+                    title=f.get("title", ""),
+                    description=f.get("description", ""),
+                    code_snippet=f.get("code", {}).get("snippet", f.get("code_snippet", ""))
+                )
+                break
+        
+        if not target_finding:
+            logging.error(f"Finding '{args.finding_id}' not found in {report_path}")
+            return 1
+            
+        print(f"🤖 Analyzing finding: {target_finding.title} ({target_finding.finding_id})...\n")
+        
+        if args.fix:
+            print("Suggesting fix...")
+            fix = asyncio.run(llm_service.suggest_fix(target_finding))
+            print("\n" + "="*40)
+            print("SUGGESTED FIX")
+            print("="*40 + "\n")
+            print(fix)
+        else:
+            explanation = asyncio.run(llm_service.explain_finding(target_finding))
+            print("\n" + "="*40)
+            print("EXPLANATION")
+            print("="*40 + "\n")
+            print(explanation)
+            
+        return 0
+
+    except Exception as e:
+        logging.error(f"Error explaining finding: {e}")
+        return 1
+
+
+def cmd_query(args: argparse.Namespace) -> int:
+    """
+    Execute natural language query.
+
+    Args:
+        args: Command-line arguments
+
+    Returns:
+        Exit code
+    """
+    import asyncio
+    import json
+    from security_assistant.nl.query_parser import QueryParser
+    from security_assistant.nl.query_executor import QueryExecutor
+
+    try:
+        # Load config
+        config = load_config(config_file=args.config, use_env=True)
+        llm_service = LLMService(config)
+        
+        # Parse query
+        parser = QueryParser(llm_service)
+        print(f"🤔 Parsing query: '{args.query}'...")
+        structured_query = asyncio.run(parser.parse(args.query))
+        
+        print(f"🔍 Intent: {structured_query.intent}")
+        print(f"🔍 Filters: {structured_query.filters.model_dump(exclude_none=True)}")
+        
+        # Load results
+        report_path = Path(args.report)
+        if not report_path.exists():
+            logging.error(f"Report file not found: {report_path}")
+            return 1
+            
+        with open(report_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+            
+        # Flatten findings from results
+        all_findings = []
+        if "results" in data and isinstance(data["results"], list):
+            for target in data["results"]:
+                all_findings.extend(target.get("findings", []))
+        elif "findings" in data:
+            all_findings = data.get("findings", [])
+            
+        # Execute
+        executor = QueryExecutor()
+        result = executor.execute(structured_query, all_findings)
+        
+        # Print results
+        print("\n" + "="*40)
+        print("RESULTS")
+        print("="*40)
+        
+        if "count" in result:
+            print(f"Total Matches: {result['count']}")
+            
+        if "results" in result:
+            for i, f in enumerate(result["results"], 1):
+                print(f"{i}. [{f.get('severity')}] {f.get('title')} ({f.get('file')}:{f.get('line_start')})")
+                
+        return 0
+
+    except Exception as e:
+        logging.error(f"Query failed: {e}")
         return 1
 
 
@@ -631,6 +906,14 @@ Environment Variables:
     scan_parser.add_argument(
         "--open", action="store_true", help="Automatically open HTML report in browser"
     )
+    scan_parser.add_argument(
+        "--llm", 
+        choices=["openai", "anthropic", "ollama", "nvidia", "disabled"],
+        help="Enable LLM integration with specific provider"
+    )
+    scan_parser.add_argument(
+        "--explain", action="store_true", help="Explain critical/high findings using LLM"
+    )
 
     # Config command
     config_parser = subparsers.add_parser("config", help="Manage configuration")
@@ -663,6 +946,37 @@ Environment Variables:
         "-f", "--format", help="Report formats (comma-separated: html,markdown,sarif)"
     )
 
+    # Explain command
+    explain_parser = subparsers.add_parser("explain", help="Explain a finding using LLM")
+    explain_parser.add_argument("finding_id", help="ID of the finding to explain")
+    explain_parser.add_argument(
+        "-r", "--report", 
+        default="security-reports/scan-results.json", 
+        help="Path to scan results JSON"
+    )
+    explain_parser.add_argument("--fix", action="store_true", help="Also suggest a fix")
+    explain_parser.add_argument("-c", "--config", help="Path to configuration file")
+
+    # PoC command
+    poc_parser = subparsers.add_parser("poc", help="Generate Proof-of-Concept exploit")
+    poc_parser.add_argument("finding_id", help="ID of the finding to generate PoC for")
+    poc_parser.add_argument(
+        "-r", "--report", 
+        default="security-reports/scan-results.json", 
+        help="Path to scan results JSON"
+    )
+    poc_parser.add_argument("-o", "--output", help="Output file path")
+
+    # Query command
+    query_parser = subparsers.add_parser("query", help="Execute natural language query")
+    query_parser.add_argument("query", help="Natural language query string")
+    query_parser.add_argument(
+        "-r", "--report", 
+        default="security-reports/scan-results.json", 
+        help="Path to scan results JSON"
+    )
+    query_parser.add_argument("-c", "--config", help="Path to configuration file")
+
     # Doctor command
     subparsers.add_parser("doctor", help="Check system health and dependencies")
 
@@ -682,6 +996,12 @@ Environment Variables:
         return cmd_config(args)
     elif args.command == "report":
         return cmd_report(args)
+    elif args.command == "explain":
+        return cmd_explain(args)
+    elif args.command == "poc":
+        return cmd_poc(args)
+    elif args.command == "query":
+        return cmd_query(args)
     elif args.command == "doctor":
         from security_assistant.doctor import run_doctor
 

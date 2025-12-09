@@ -14,8 +14,8 @@ from pathlib import Path
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from security_assistant.orchestrator import ScanOrchestrator, ScannerType
 from security_assistant.gitlab_api import GitLabAPI
+from security_assistant.orchestrator import ScannerType, ScanOrchestrator
 
 
 def main():
@@ -90,7 +90,7 @@ def main():
     # Create issues
     print("5. Create GitLab Issues?")
     print("-" * 80)
-    print(f"Create issues for top 3 findings? (y/n): ", end="")
+    print("Create issues for top 3 findings? (y/n): ", end="")
     
     try:
         response = input().strip().lower()

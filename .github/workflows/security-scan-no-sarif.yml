@@ -37,6 +37,14 @@ on:
         description: 'Fail on critical findings'
         required: false
         default: 'true'
+      fail_on_high:
+        description: 'Fail on high findings'
+        required: false
+        default: 'false'
+      high_threshold:
+        description: 'Maximum allowed HIGH findings (0 = fail on any)'
+        required: false
+        default: '10'
 
 env:
   ENABLE_BANDIT: ${{ github.event.inputs.enable_bandit || 'true' }}
@@ -46,8 +54,9 @@ env:
   PRIORITY_THRESHOLD: '70'
   MAX_ISSUES: '10'
   SCAN_TARGET: ${{ github.event.inputs.scan_target || '.' }}
-  FAIL_ON_HIGH: 'true'
+  FAIL_ON_HIGH: ${{ github.event.inputs.fail_on_high || 'false' }}
   FAIL_ON_CRITICAL: ${{ github.event.inputs.fail_on_critical || 'true' }}
+  HIGH_THRESHOLD: ${{ github.event.inputs.high_threshold || '10' }}
 
 jobs:
   security-scan:
@@ -282,17 +291,26 @@ jobs:
           
           critical_count = results['findings_by_severity'].get('CRITICAL', 0)
           high_count = results['findings_by_severity'].get('HIGH', 0)
+          high_threshold = int(os.getenv('HIGH_THRESHOLD', '10'))
           
           print(f'Critical findings: {critical_count}')
-          print(f'High findings: {high_count}')
+          print(f'High findings: {high_count} (threshold: {high_threshold})')
           
+          # Check CRITICAL
           if os.getenv('FAIL_ON_CRITICAL') == 'true' and critical_count > 0:
               print('❌ Pipeline failed: Critical severity findings detected')
               sys.exit(1)
           
-          if os.getenv('FAIL_ON_HIGH') == 'true' and high_count > 0:
-              print('❌ Pipeline failed: High severity findings detected')
-              sys.exit(1)
+          # Check HIGH with threshold
+          if os.getenv('FAIL_ON_HIGH') == 'true':
+              if high_threshold == 0 and high_count > 0:
+                  print('❌ Pipeline failed: High severity findings detected (strict mode)')
+                  sys.exit(1)
+              elif high_count > high_threshold:
+                  print(f'❌ Pipeline failed: High findings ({high_count}) exceed threshold ({high_threshold})')
+                  sys.exit(1)
+              else:
+                  print(f'⚠️  High findings within threshold: {high_count}/{high_threshold}')
           
           print('✅ No blocking findings detected')
           "

@@ -5,23 +5,23 @@ Tests the security validator that prevents meta-attacks on the
 security workstation itself.
 """
 
-import pytest
-import tempfile
 import json
-from pathlib import Path
+import tempfile
 from datetime import datetime, timedelta
-from unittest.mock import patch, MagicMock
+from pathlib import Path
+from unittest.mock import MagicMock, patch
 
-from security_assistant.security_validator import (
-    ScannerIntegrityValidator,
-    ConfigurationSandbox,
-    CacheIntegrityValidator,
-    MetaSecurityValidator,
-    SecurityValidationResult,
-)
+import pytest
+
 from security_assistant.scanners.bandit_scanner import BanditScanner
 from security_assistant.scanners.semgrep_scanner import SemgrepScanner
 from security_assistant.scanners.trivy_scanner import TrivyScanner
+from security_assistant.security_validator import (
+    CacheIntegrityValidator,
+    ConfigurationSandbox,
+    MetaSecurityValidator,
+    ScannerIntegrityValidator,
+)
 
 
 class TestScannerIntegrityValidator:
@@ -43,7 +43,7 @@ class TestScannerIntegrityValidator:
         """Test validation of legitimate Semgrep scanner."""
         # Skip if semgrep module not installed
         try:
-            import semgrep
+            import semgrep  # noqa: F401
         except ImportError:
             pytest.skip("Semgrep not installed")
         
@@ -283,8 +283,8 @@ class TestCacheIntegrityValidator:
         signed['timestamp'] = old_time.isoformat()
         
         # Recalculate signature with old timestamp
-        import hmac
         import hashlib
+        import hmac
         signature = signed.pop('signature')
         data_bytes = json.dumps(signed, sort_keys=True).encode('utf-8')
         new_signature = hmac.new(
@@ -357,7 +357,7 @@ class TestOrchestratorIntegration:
     
     def test_orchestrator_validates_scanners(self):
         """Test that orchestrator validates scanners when enabled."""
-        from security_assistant.orchestrator import ScanOrchestrator, ScannerType
+        from security_assistant.orchestrator import ScannerType, ScanOrchestrator
         
         orchestrator = ScanOrchestrator(enable_meta_security=True)
         
@@ -368,7 +368,7 @@ class TestOrchestratorIntegration:
     
     def test_orchestrator_rejects_invalid_scanner(self):
         """Test that orchestrator rejects invalid scanners."""
-        from security_assistant.orchestrator import ScanOrchestrator, ScannerType
+        from security_assistant.orchestrator import ScannerType, ScanOrchestrator
         
         orchestrator = ScanOrchestrator(enable_meta_security=True)
         
@@ -388,7 +388,7 @@ class TestOrchestratorIntegration:
     
     def test_orchestrator_without_meta_security(self):
         """Test orchestrator with meta-security disabled."""
-        from security_assistant.orchestrator import ScanOrchestrator, ScannerType
+        from security_assistant.orchestrator import ScannerType, ScanOrchestrator
         
         orchestrator = ScanOrchestrator(enable_meta_security=False)
         

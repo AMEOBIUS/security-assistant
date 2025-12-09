@@ -8,10 +8,10 @@ from datetime import datetime
 from typing import List
 
 from security_assistant.orchestrator import (
-    OrchestrationResult,
-    UnifiedFinding,
     FindingSeverity,
-    ScannerType
+    OrchestrationResult,
+    ScannerType,
+    UnifiedFinding,
 )
 
 

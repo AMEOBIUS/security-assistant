@@ -7,7 +7,6 @@ WARNING: This code is intentionally insecure. DO NOT use in production!
 
 import os
 import pickle
-import subprocess
 
 
 # B105: Hardcoded password

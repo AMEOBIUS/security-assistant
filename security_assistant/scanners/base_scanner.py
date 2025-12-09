@@ -32,6 +32,7 @@ class ScannerConfig:
 
     min_severity: str = "LOW"
     timeout: int = 300
+    extra_args: List[str] = field(default_factory=list)
     exclude_dirs: List[str] = field(
         default_factory=lambda: [
             "venv",
@@ -119,6 +120,8 @@ class BaseScanner(ABC, Generic[F, R]):
             self.config.min_severity = kwargs["min_severity"]
         if "timeout" in kwargs:
             self.config.timeout = kwargs["timeout"]
+        if "extra_args" in kwargs:
+            self.config.extra_args = kwargs["extra_args"]
         if "exclude_dirs" in kwargs:
             self.config.exclude_dirs = kwargs["exclude_dirs"]
 

@@ -4,19 +4,18 @@ Tests scanner functionality with mocked Bandit output.
 """
 
 import json
+from unittest.mock import Mock, patch
+
 import pytest
-from unittest.mock import Mock, patch, MagicMock
-from datetime import datetime
 
-from security_assistant.scanners.bandit_scanner import (
-    BanditScanner,
-    BanditFinding,
-    ScanResult,
-    BanditScannerError,
-    BanditNotInstalledError
-)
 from security_assistant.gitlab_api import IssueData
-
+from security_assistant.scanners.bandit_scanner import (
+    BanditFinding,
+    BanditNotInstalledError,
+    BanditScanner,
+    BanditScannerError,
+    ScanResult,
+)
 
 # Sample Bandit JSON output for testing
 SAMPLE_BANDIT_OUTPUT = {

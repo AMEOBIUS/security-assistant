@@ -125,6 +125,14 @@ class TrivyConfig(ScannerConfig):
         return [s.lower() for s in v]
 
 
+class NucleiConfig(ScannerConfig):
+    """Nuclei scanner configuration."""
+    
+    templates: List[str] = Field(default_factory=list)
+    severity: List[str] = Field(default_factory=lambda: ["critical", "high", "medium"])
+    rate_limit: int = Field(default=150, ge=1)
+
+
 class OrchestratorConfig(BaseModel):
     """Orchestrator configuration."""
 
@@ -190,6 +198,33 @@ class ThresholdConfig(BaseModel):
     max_medium: int = Field(default=50, ge=0)
 
 
+class LLMProvider(str, Enum):
+    """Supported LLM providers."""
+    
+    OPENAI = "openai"
+    ANTHROPIC = "anthropic"
+    OLLAMA = "ollama"
+    NVIDIA = "nvidia"
+    DISABLED = "disabled"
+
+
+class LLMConfig(BaseModel):
+    """LLM integration configuration."""
+    
+    model_config = ConfigDict(extra="ignore")
+    
+    provider: LLMProvider = Field(default=LLMProvider.DISABLED)
+    api_key: Optional[str] = Field(default=None, description="API key (can also be set via env var)")
+    model: str = Field(default="", description="Model name (e.g. gpt-4, claude-3-opus)")
+    temperature: float = Field(default=0.7, ge=0.0, le=2.0)
+    max_tokens: int = Field(default=2000, ge=1)
+    timeout: int = Field(default=60, ge=1)
+    
+    # Provider-specific settings
+    api_base: Optional[str] = Field(default=None, description="Custom API base URL (for Ollama/Azure)")
+    retries: int = Field(default=3, ge=0, le=10)
+
+
 class SecurityAssistantConfig(BaseModel):
     """Main configuration for Security Assistant."""
 
@@ -197,11 +232,14 @@ class SecurityAssistantConfig(BaseModel):
         extra="forbid",
         validate_default=True,
         env_prefix="SA_",
+        env_nested_delimiter="__",
     )
 
+    llm: LLMConfig = Field(default_factory=LLMConfig)
     bandit: BanditConfig = Field(default_factory=BanditConfig)
     semgrep: SemgrepConfig = Field(default_factory=SemgrepConfig)
     trivy: TrivyConfig = Field(default_factory=TrivyConfig)
+    nuclei: NucleiConfig = Field(default_factory=NucleiConfig)
     orchestrator: OrchestratorConfig = Field(default_factory=OrchestratorConfig)
     report: ReportConfig = Field(default_factory=ReportConfig)
     gitlab: GitLabConfig = Field(default_factory=GitLabConfig)
@@ -216,7 +254,12 @@ class SecurityAssistantConfig(BaseModel):
 
     @model_validator(mode="after")
     def validate_at_least_one_scanner(self) -> "SecurityAssistantConfig":
-        if not any([self.bandit.enabled, self.semgrep.enabled, self.trivy.enabled]):
+        if not any([
+            self.bandit.enabled, 
+            self.semgrep.enabled, 
+            self.trivy.enabled,
+            self.nuclei.enabled
+        ]):
             raise ValueError("At least one scanner must be enabled")
         return self
 

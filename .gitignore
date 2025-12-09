@@ -122,3 +122,22 @@ exported-assets/
 *.backup
 *_backup.*
 *_old.*
+
+# ============================================
+# MCP Configuration (contains secrets)
+# ============================================
+mcp.json.READY
+mcp.json.local
+**/mcp.json
+!mcp.json.template
+
+# ============================================
+# Temporary Scripts (cleanup targets)
+# ============================================
+scripts/fix_*.py
+scripts/perplexity_*.py
+scripts/perplexity_*.bat
+scripts/perplexity_*.sh
+scripts/test_perplexity*.py
+scripts/add_missing_imports.py
+scripts/remove_unused_vars.py

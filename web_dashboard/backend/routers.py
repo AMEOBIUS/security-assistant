@@ -2,10 +2,11 @@
 API Routers for Dashboard
 """
 
-from fastapi import APIRouter, HTTPException
-from typing import List, Dict, Any
 import json
 from pathlib import Path
+from typing import Any, Dict, List
+
+from fastapi import APIRouter, HTTPException
 
 router = APIRouter()
 
@@ -23,7 +24,7 @@ async def list_scans():
     scan_file = RESULTS_DIR / "scan-results.json"
     if scan_file.exists():
         try:
-            with open(scan_file, 'r') as f:
+            with open(scan_file) as f:
                 data = json.load(f)
                 scans.append({
                     "id": "latest",
@@ -43,7 +44,7 @@ async def get_scan_details(scan_id: str):
     if scan_id == "latest":
         scan_file = RESULTS_DIR / "scan-results.json"
         if scan_file.exists():
-            with open(scan_file, 'r') as f:
+            with open(scan_file) as f:
                 return json.load(f)
     
     raise HTTPException(status_code=404, detail="Scan not found")

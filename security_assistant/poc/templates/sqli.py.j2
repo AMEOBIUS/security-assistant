@@ -1,0 +1,44 @@
+"""
+Proof of Concept for SQL Injection
+Target: {{ target_url }}
+Finding: {{ finding.title }} ({{ finding.finding_id }})
+File: {{ finding.file_path }}:{{ finding.line_start }}
+"""
+
+import requests
+import sys
+
+def test_sqli(url, param, payload):
+    print(f"[*] Testing SQL Injection on {url}")
+    print(f"[*] Parameter: {param}")
+    print(f"[*] Payload: {payload}")
+    
+    # Construct query string
+    params = {param: payload}
+    
+    try:
+        response = requests.get(url, params=params)
+        
+        print(f"[*] Status Code: {response.status_code}")
+        
+        # Simple heuristic check
+        if response.status_code == 500 or "syntax error" in response.text.lower():
+            print("[+] Potential SQL Injection detected (Error-based)!")
+            print("[+] Server returned 500 or syntax error.")
+        elif len(response.text) > 0:
+             print("[*] Request successful. Check response manually for injection evidence.")
+        else:
+            print("[-] No obvious signs of injection in response.")
+            
+    except requests.RequestException as e:
+        print(f"[-] Request failed: {e}")
+
+if __name__ == "__main__":
+    TARGET_URL = "{{ target_url }}"
+    PARAM = "{{ param_name }}"
+    PAYLOAD = "{{ payload }}"
+    
+    if len(sys.argv) > 1:
+        TARGET_URL = sys.argv[1]
+        
+    test_sqli(TARGET_URL, PARAM, PAYLOAD)

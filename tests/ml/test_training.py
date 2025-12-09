@@ -4,13 +4,13 @@ Tests for ML Training Pipeline
 Version: 1.0.0
 """
 
-import pytest
-import numpy as np
-from pathlib import Path
 import tempfile
+from pathlib import Path
 
-from security_assistant.orchestrator import UnifiedFinding, FindingSeverity, ScannerType
+import pytest
+
 from security_assistant.ml.training import ModelTrainer, TrainingMetrics
+from security_assistant.orchestrator import FindingSeverity, ScannerType, UnifiedFinding
 
 
 class TestModelTrainer:

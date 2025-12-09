@@ -18,6 +18,7 @@ class ScannerType(str, Enum):
     BANDIT = "bandit"
     SEMGREP = "semgrep"
     TRIVY = "trivy"
+    NUCLEI = "nuclei"
 
 
 class FindingSeverity(str, Enum):
@@ -65,6 +66,15 @@ class FindingConverter:
         "UNKNOWN": FindingSeverity.INFO,
     }
 
+    NUCLEI_SEVERITY_MAP = {
+        "critical": FindingSeverity.CRITICAL,
+        "high": FindingSeverity.HIGH,
+        "medium": FindingSeverity.MEDIUM,
+        "low": FindingSeverity.LOW,
+        "info": FindingSeverity.INFO,
+        "unknown": FindingSeverity.INFO,
+    }
+
     def __init__(self):
         """Initialize finding converter."""
         logger.debug("FindingConverter initialized")
@@ -95,6 +105,8 @@ class FindingConverter:
                     findings = self.convert_semgrep(result, unified_finding_class)
                 elif scanner_type == ScannerType.TRIVY:
                     findings = self.convert_trivy(result, unified_finding_class)
+                elif scanner_type == ScannerType.NUCLEI:
+                    findings = self.convert_nuclei(result, unified_finding_class)
                 else:
                     logger.warning(f"Unknown scanner type: {scanner_type}")
                     continue
@@ -108,6 +120,48 @@ class FindingConverter:
                 logger.error(f"Error converting {scanner_type.value} findings: {e}")
 
         return all_findings
+
+    def convert_nuclei(self, result, unified_finding_class) -> List:
+        """Convert Nuclei findings."""
+        unified_findings = []
+        
+        for finding in result.findings:
+            severity = self.NUCLEI_SEVERITY_MAP.get(
+                finding.info.get("severity", "unknown").lower(), FindingSeverity.INFO
+            )
+            
+            # Use template ID + host for unique ID
+            finding_id = f"nuclei-{finding.template_id}-{self._hash_string(finding.host)}"
+            
+            # Get references
+            references = finding.info.get("reference", [])
+            if isinstance(references, str):
+                references = [references]
+            
+            # Get CWEs
+            classification = finding.info.get("classification", {})
+            cwe_ids = classification.get("cwe-id", [])
+            if isinstance(cwe_ids, str):
+                cwe_ids = [cwe_ids]
+
+            unified = unified_finding_class(
+                finding_id=finding_id,
+                scanner=ScannerType.NUCLEI,
+                severity=severity,
+                category="dast",
+                file_path=finding.host,  # Nuclei scans URLs/Hosts
+                line_start=0,
+                line_end=0,
+                title=finding.info.get("name", finding.template_id),
+                description=finding.info.get("description", ""),
+                code_snippet=f"Matched at: {finding.matched_at}\nType: {finding.type}\nCurl: {finding.curl_command or ''}",
+                references=references,
+                cwe_ids=cwe_ids,
+                raw_data={"nuclei_finding": finding},
+            )
+            unified_findings.append(unified)
+            
+        return unified_findings
 
     def convert_bandit(self, result, unified_finding_class) -> List:
         """Convert Bandit findings to unified format."""
@@ -273,4 +327,8 @@ class FindingConverter:
     def _hash_location(self, file_path: str, line: int) -> str:
         """Generate short hash for location."""
         content = f"{file_path}:{line}"
-        return hashlib.md5(content.encode()).hexdigest()[:8]
+        return hashlib.md5(content.encode(), usedforsecurity=False).hexdigest()[:8]
+
+    def _hash_string(self, content: str) -> str:
+        """Generate short hash for any string."""
+        return hashlib.md5(content.encode(), usedforsecurity=False).hexdigest()[:8]

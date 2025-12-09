@@ -6,13 +6,16 @@ Tests EPSS + KEV integration for smart prioritization.
 Version: 1.0.0
 """
 
-import pytest
-from unittest.mock import Mock, MagicMock
+from unittest.mock import MagicMock
 
-from security_assistant.enrichment.enricher import VulnerabilityEnricher, EnrichedVulnerability
-from security_assistant.enrichment.kev import KEVEntry
+import pytest
+
+from security_assistant.enrichment.enricher import (
+    EnrichedVulnerability,
+    VulnerabilityEnricher,
+)
+from security_assistant.enrichment.kev import KEVClient, KEVEntry
 from security_assistant.ml.epss import EPSSClient
-from security_assistant.enrichment.kev import KEVClient
 
 
 class TestEnrichedVulnerability:

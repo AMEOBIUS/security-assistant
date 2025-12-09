@@ -12,17 +12,16 @@ Features demonstrated:
 - Getting schedule status
 """
 
-import os
-import sys
 import logging
+import sys
 from pathlib import Path
 
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from security_assistant.scheduler import ScheduleManager, ScanSchedule
 from security_assistant.orchestrator import ScanOrchestrator
-from security_assistant.report_generator import ReportGenerator, ReportFormat
+from security_assistant.report_generator import ReportFormat, ReportGenerator
+from security_assistant.scheduler import ScanSchedule, ScheduleManager
 
 # Configure logging
 logging.basicConfig(
@@ -123,7 +122,7 @@ def example_1_basic_schedule():
     
     # Get status
     status = manager.get_status()
-    print(f"\nScheduler status:")
+    print("\nScheduler status:")
     print(f"  Running: {status['running']}")
     print(f"  Total schedules: {status['total_schedules']}")
     
@@ -196,7 +195,7 @@ def example_3_with_notifications():
     manager.add_schedule(schedule)
     
     print(f"\nSchedule created: {schedule.name}")
-    print(f"Notifications:")
+    print("Notifications:")
     print(f"  Emails: {', '.join(schedule.notification_emails)}")
     print(f"  Webhooks: {', '.join(schedule.notification_webhooks)}")
     
@@ -251,7 +250,7 @@ def example_5_update_schedule():
     )
     
     manager.add_schedule(schedule)
-    print(f"\nOriginal schedule:")
+    print("\nOriginal schedule:")
     print(f"  Cron: {schedule.cron}")
     print(f"  Scanners: {', '.join(schedule.scanners)}")
     
@@ -264,7 +263,7 @@ def example_5_update_schedule():
     )
     
     manager.update_schedule(updated_schedule)
-    print(f"\nUpdated schedule:")
+    print("\nUpdated schedule:")
     print(f"  Cron: {updated_schedule.cron}")
     print(f"  Scanners: {', '.join(updated_schedule.scanners)}")
     

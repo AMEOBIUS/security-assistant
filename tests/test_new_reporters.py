@@ -5,21 +5,20 @@ Verifies the integration of HTML and SARIF reporters into the Factory
 and their correct generation logic.
 """
 
-import unittest
-from unittest.mock import MagicMock, patch
-from datetime import datetime
 import json
-from pathlib import Path
+import unittest
+from datetime import datetime
 
 from security_assistant.orchestrator import (
-    OrchestrationResult,
-    UnifiedFinding,
     FindingSeverity,
-    ScannerType
+    OrchestrationResult,
+    ScannerType,
+    UnifiedFinding,
 )
-from security_assistant.reporting.reporter_factory import ReporterFactory
 from security_assistant.reporting.html_reporter import HTMLReporter
+from security_assistant.reporting.reporter_factory import ReporterFactory
 from security_assistant.reporting.sarif_reporter import SarifReporter
+
 
 class TestNewReporters(unittest.TestCase):
     

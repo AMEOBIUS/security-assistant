@@ -66,7 +66,7 @@ def test_connection():
         print("3. Fetching project information...")
         project = api.get_project(project_id)
         
-        print(f"   ✓ Project found!")
+        print("   ✓ Project found!")
         print()
         print("   Project Details:")
         print(f"   - Name: {project.get('name')}")

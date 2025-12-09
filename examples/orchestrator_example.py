@@ -14,18 +14,15 @@ Features demonstrated:
 """
 
 import sys
-import os
 from pathlib import Path
 
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from security_assistant.orchestrator import (
-    ScanOrchestrator,
     ScannerType,
-    FindingSeverity,
+    ScanOrchestrator,
 )
-from security_assistant.gitlab_api import GitLabAPI
 
 
 def example_basic_scan():
@@ -55,26 +52,26 @@ def example_basic_scan():
     try:
         result = orchestrator.scan_directory(target_dir, recursive=True)
         
-        print(f"\n3. Scan Results:")
+        print("\n3. Scan Results:")
         print(f"   Target: {result.target}")
         print(f"   Execution time: {result.execution_time_seconds:.2f}s")
         print(f"   Total findings: {result.total_findings}")
         print(f"   Unique findings: {len(result.deduplicated_findings)}")
         print(f"   Duplicates removed: {result.duplicates_removed}")
         
-        print(f"\n4. Findings by Severity:")
+        print("\n4. Findings by Severity:")
         print(f"   🔴 Critical: {result.critical_count}")
         print(f"   🟠 High: {result.high_count}")
         print(f"   🟡 Medium: {result.medium_count}")
         print(f"   🟢 Low: {result.low_count}")
         
-        print(f"\n5. Findings by Scanner:")
+        print("\n5. Findings by Scanner:")
         for scanner, count in result.findings_by_scanner.items():
             print(f"   {scanner.value}: {count}")
         
         # Show top priority findings
         if result.top_priority_findings:
-            print(f"\n6. Top 5 Priority Findings:")
+            print("\n6. Top 5 Priority Findings:")
             for i, finding in enumerate(result.top_priority_findings[:5], 1):
                 print(f"   {i}. [{finding.severity.value}] {finding.title}")
                 print(f"      File: {finding.file_path}:{finding.line_start}")
@@ -121,7 +118,7 @@ def example_trivy_scan():
     try:
         result = orchestrator.scan_directory(target_dir, recursive=True)
         
-        print(f"\n3. Comprehensive Scan Results:")
+        print("\n3. Comprehensive Scan Results:")
         print(f"   Execution time: {result.execution_time_seconds:.2f}s")
         print(f"   Unique findings: {len(result.deduplicated_findings)}")
         
@@ -131,7 +128,7 @@ def example_trivy_scan():
             cat = finding.category
             by_category[cat] = by_category.get(cat, 0) + 1
         
-        print(f"\n4. Findings by Category:")
+        print("\n4. Findings by Category:")
         for category, count in sorted(by_category.items()):
             print(f"   {category}: {count}")
         
@@ -218,7 +215,7 @@ def example_gitlab_integration():
             print(f"   Title: {issues[0].title}")
             print(f"   Labels: {', '.join(issues[0].labels)}")
             print(f"   Confidential: {issues[0].confidential}")
-            print(f"\n   Description (first 200 chars):")
+            print("\n   Description (first 200 chars):")
             print(f"   {issues[0].description[:200]}...")
         
         # Note: Actual GitLab API call would be:
@@ -253,12 +250,12 @@ def example_single_file_scan():
     try:
         result = orchestrator.scan_file(target_file)
         
-        print(f"\n2. Results:")
+        print("\n2. Results:")
         print(f"   Execution time: {result.execution_time_seconds:.2f}s")
         print(f"   Findings: {len(result.deduplicated_findings)}")
         
         if result.deduplicated_findings:
-            print(f"\n3. Findings:")
+            print("\n3. Findings:")
             for finding in result.deduplicated_findings:
                 print(f"   • [{finding.severity.value}] {finding.title}")
                 print(f"     Line {finding.line_start}: {finding.description[:60]}...")
@@ -330,7 +327,7 @@ def main():
     print(f"  {len(examples) + 1}. Run all examples")
     
     try:
-        choice = input("\nSelect example (1-{}): ".format(len(examples) + 1))
+        choice = input(f"\nSelect example (1-{len(examples) + 1}): ")
         choice = int(choice)
         
         if 1 <= choice <= len(examples):

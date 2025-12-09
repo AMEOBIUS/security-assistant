@@ -5,11 +5,11 @@ Set GITLAB_PERSONAL_TOKEN (or GITLAB_TOKEN) and GITLAB_TEST_PROJECT environment 
 """
 
 import os
-import pytest
 from datetime import datetime
 
-from security_assistant.gitlab_api import GitLabAPI, IssueData
+import pytest
 
+from security_assistant.gitlab_api import GitLabAPI, IssueData
 
 # Skip integration tests if credentials not provided
 pytestmark = pytest.mark.skipif(

@@ -12,17 +12,16 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from security_assistant.config import (
-    SecurityAssistantConfig,
     BanditConfig,
-    SemgrepConfig,
-    TrivyConfig,
+    DeduplicationStrategy,
+    GitLabConfig,
     OrchestratorConfig,
     ReportConfig,
-    GitLabConfig,
-    ThresholdConfig,
-    DeduplicationStrategy,
     ReportFormat,
-    load_config
+    SecurityAssistantConfig,
+    SemgrepConfig,
+    ThresholdConfig,
+    TrivyConfig,
 )
 
 
@@ -44,7 +43,7 @@ def example_minimal_config():
     
     # Save to file
     config.save('config/minimal.yaml', format='yaml')
-    print(f"\n✅ Saved to: config/minimal.yaml")
+    print("\n✅ Saved to: config/minimal.yaml")
 
 
 def example_python_only_config():
@@ -85,7 +84,7 @@ def example_python_only_config():
     print(f"  Scan target: {config.scan_target}")
     
     config.save('config/python-only.yaml', format='yaml')
-    print(f"\n✅ Saved to: config/python-only.yaml")
+    print("\n✅ Saved to: config/python-only.yaml")
 
 
 def example_strict_security_config():
@@ -137,7 +136,7 @@ def example_strict_security_config():
     )
     
     print("\nStrict security configuration:")
-    print(f"  All scanners enabled: ✓")
+    print("  All scanners enabled: ✓")
     print(f"  Fail on critical: {config.thresholds.fail_on_critical}")
     print(f"  Fail on high: {config.thresholds.fail_on_high}")
     print(f"  Max critical: {config.thresholds.max_critical}")
@@ -145,7 +144,7 @@ def example_strict_security_config():
     print(f"  Continue on error: {config.orchestrator.continue_on_error}")
     
     config.save('config/strict-security.yaml', format='yaml')
-    print(f"\n✅ Saved to: config/strict-security.yaml")
+    print("\n✅ Saved to: config/strict-security.yaml")
 
 
 def example_gitlab_integration_config():
@@ -190,7 +189,7 @@ def example_gitlab_integration_config():
     print(f"  Issue labels: {config.gitlab.issue_labels}")
     
     config.save('config/gitlab-integration.yaml', format='yaml')
-    print(f"\n✅ Saved to: config/gitlab-integration.yaml")
+    print("\n✅ Saved to: config/gitlab-integration.yaml")
     print("\nNote: Set these environment variables:")
     print("  export SA_GITLAB_TOKEN='your-token'")
     print("  export SA_GITLAB_PROJECT_ID='namespace/project'")
@@ -231,13 +230,13 @@ def example_quick_scan_config():
     )
     
     print("\nQuick scan configuration:")
-    print(f"  Bandit only: ✓")
+    print("  Bandit only: ✓")
     print(f"  Severity: {config.bandit.severity_level}")
     print(f"  Workers: {config.orchestrator.max_workers}")
     print(f"  Report format: {[f.value for f in config.report.formats]}")
     
     config.save('config/quick-scan.yaml', format='yaml')
-    print(f"\n✅ Saved to: config/quick-scan.yaml")
+    print("\n✅ Saved to: config/quick-scan.yaml")
 
 
 def example_config_merging():

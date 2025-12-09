@@ -33,8 +33,10 @@ exclude = [
 [lint.per-file-ignores]
 # Allow unused imports in __init__.py files
 "__init__.py" = ["F401"]
-# Allow star imports in test files
-"tests/**/*.py" = ["F403", "F405"]
+# Allow star imports and unused variables in test files
+"tests/**/*.py" = ["F403", "F405", "F841", "N806", "E721", "E402", "B007"]
+# Test files with ML naming conventions
+"tests/ml/**/*.py" = ["N803", "N806"]
 # Allow ML naming conventions (X, y, X_train, etc.) and raise without from
 "security_assistant/ml/**/*.py" = ["N803", "N806", "B904"]
 # Allow raise without from in API/scanner error handling
@@ -42,6 +44,12 @@ exclude = [
 "security_assistant/glab_cli.py" = ["B904"]
 "security_assistant/scanners/**/*.py" = ["B904"]
 "security_assistant/scheduler.py" = ["B904"]
+# Examples are intentionally vulnerable or demonstration code
+"examples/**/*.py" = ["F841", "F821", "E402", "UP031", "B007"]
+# Scripts may have specific patterns
+"scripts/**/*.py" = ["F841", "B007", "E402", "E722"]
+# Frontend scripts
+"frontend/**/*.py" = ["E722", "F841"]
 
 [format]
 # Use double quotes for strings

@@ -42,3 +42,8 @@ ruff>=0.1.0
 
 # Development
 python-dotenv>=1.0.0
+
+# LLM Integration
+openai>=1.0.0
+anthropic>=0.18.0
+httpx>=0.27.0

@@ -14,6 +14,7 @@ from .deduplication import DeduplicationService, DeduplicationStrategy
 from .enrichment_service import EnrichmentService, EnrichmentType
 from .finding_converter import FindingConverter
 from .issue_converter import IssueConverter
+from .llm_service import LLMService
 from .ml_scoring_service import MLScoringService
 from .priority_calculator import PriorityCalculator
 from .scan_coordinator_service import ScanCoordinatorService
@@ -28,4 +29,5 @@ __all__ = [
     "EnrichmentType",
     "ScanCoordinatorService",
     "IssueConverter",
+    "LLMService",
 ]

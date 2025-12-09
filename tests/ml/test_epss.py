@@ -6,9 +6,10 @@ Tests EPSS API integration for exploit probability scoring.
 Version: 1.0.0
 """
 
-import pytest
 from datetime import datetime, timedelta
 from unittest.mock import Mock, patch
+
+import pytest
 
 from security_assistant.ml.epss import EPSSClient, EPSSScore
 

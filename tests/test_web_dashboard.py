@@ -1,9 +1,9 @@
-import pytest
-from fastapi.testclient import TestClient
-from web_dashboard.backend.main import app
 import json
-import os
-from unittest.mock import patch, mock_open
+from unittest.mock import mock_open, patch
+
+from fastapi.testclient import TestClient
+
+from web_dashboard.backend.main import app
 
 client = TestClient(app)
 

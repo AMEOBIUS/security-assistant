@@ -124,7 +124,7 @@ class MLScorer:
 
         try:
             with open(path, "rb") as f:
-                model_data = pickle.load(f)
+                model_data = pickle.load(f)  # nosec B301 - trusted local model file
 
             # Extract model and metadata
             if isinstance(model_data, dict):

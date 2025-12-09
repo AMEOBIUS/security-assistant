@@ -5,11 +5,12 @@ Tests the reporter factory pattern and registration system.
 """
 
 import pytest
-from security_assistant.reporting.reporter_factory import ReporterFactory
-from security_assistant.reporting.base_reporter import BaseReporter, ReportFormat
+
+from security_assistant.reporting.base_reporter import BaseReporter
+from security_assistant.reporting.html_reporter import HTMLReporter
 from security_assistant.reporting.json_reporter import JSONReporter
 from security_assistant.reporting.markdown_reporter import MarkdownReporter
-from security_assistant.reporting.html_reporter import HTMLReporter
+from security_assistant.reporting.reporter_factory import ReporterFactory
 from security_assistant.reporting.sarif_reporter import SarifReporter
 from security_assistant.reporting.text_reporter import TextReporter
 from security_assistant.reporting.yaml_reporter import YAMLReporter

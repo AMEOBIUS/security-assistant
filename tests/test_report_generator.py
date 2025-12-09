@@ -5,12 +5,12 @@ Tests only the public interface of ReportGenerator.
 Internal methods are tested via reporter-specific tests.
 """
 
-import pytest
 from pathlib import Path
 
+import pytest
+
 from security_assistant.report_generator import ReportGenerator
-from security_assistant.reporting.base_reporter import ReportFormat
-from tests.conftest_reporters import create_test_result, create_test_finding
+from tests.conftest_reporters import create_test_finding, create_test_result
 
 
 class TestReportGenerator:
@@ -144,8 +144,10 @@ class TestReportGenerator:
     
     def test_generate_comparison_report(self, tmp_path):
         """Test generating comparison report."""
-        from security_assistant.report_comparator import ReportComparator, ComparisonResult
-        from datetime import datetime
+
+        from security_assistant.report_comparator import (
+            ReportComparator,
+        )
         
         gen = ReportGenerator()
         finding = create_test_finding()

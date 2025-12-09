@@ -9,8 +9,8 @@ Version: 1.0.0
 import pytest
 
 from security_assistant.analysis.false_positive_detector import (
-    FalsePositiveDetector,
     FalsePositiveAnalysis,
+    FalsePositiveDetector,
 )
 
 
@@ -181,7 +181,9 @@ class TestPatternDetectors:
     
     def test_sanitization_pattern(self):
         """Test sanitization pattern detector."""
-        from security_assistant.analysis.patterns.sanitization import SanitizationPattern
+        from security_assistant.analysis.patterns.sanitization import (
+            SanitizationPattern,
+        )
         
         detector = SanitizationPattern()
         
@@ -205,7 +207,9 @@ class TestPatternDetectors:
     
     def test_safe_context_pattern(self):
         """Test safe context pattern detector."""
-        from security_assistant.analysis.patterns.safe_contexts import SafeContextPattern
+        from security_assistant.analysis.patterns.safe_contexts import (
+            SafeContextPattern,
+        )
         
         detector = SafeContextPattern()
         

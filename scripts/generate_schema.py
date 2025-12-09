@@ -16,6 +16,7 @@ sys.path.append(str(project_root))
 
 from security_assistant.config import SecurityAssistantConfig
 
+
 def generate_schema():
     """Generate and save JSON Schema."""
     schema = SecurityAssistantConfig.model_json_schema()

@@ -6,16 +6,16 @@ Tests feature extraction from UnifiedFinding objects.
 Version: 1.0.0
 """
 
-import pytest
-from pathlib import Path
 
+import pytest
+
+from security_assistant.ml.epss import EPSSClient
+from security_assistant.ml.features import FeatureExtractor, FeatureVector
 from security_assistant.orchestrator import (
-    UnifiedFinding,
     FindingSeverity,
     ScannerType,
+    UnifiedFinding,
 )
-from security_assistant.ml.features import FeatureExtractor, FeatureVector
-from security_assistant.ml.epss import EPSSClient
 
 
 class TestFeatureVector:

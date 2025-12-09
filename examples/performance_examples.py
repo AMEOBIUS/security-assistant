@@ -7,16 +7,17 @@ and optimization features.
 
 import time
 from pathlib import Path
+
 from security_assistant.performance import (
-    PerformanceMonitor,
     PerformanceCache,
+    PerformanceMonitor,
     PerformanceOptimizer,
     ResourceMonitor,
-    profile,
     cached,
+    export_metrics,
     get_monitor,
     get_performance_summary,
-    export_metrics
+    profile,
 )
 
 
@@ -43,7 +44,7 @@ def example_1_basic_profiling():
     print(f"\nOperation: {metrics.operation}")
     print(f"Duration: {metrics.duration:.3f}s")
     print(f"Memory delta: {metrics.memory_delta:,} bytes")
-    print(f"\nSummary:")
+    print("\nSummary:")
     for op, stats in summary.items():
         print(f"  {op}:")
         print(f"    Count: {stats['count']}")
@@ -72,7 +73,7 @@ def example_2_decorator_profiling():
     # Get performance summary
     summary = get_performance_summary()
     
-    print(f"\nPerformance Summary:")
+    print("\nPerformance Summary:")
     for op, stats in summary.items():
         print(f"\n{op}:")
         print(f"  Executions: {stats['count']}")
@@ -113,11 +114,11 @@ def example_3_caching():
     if duration2 > 0:
         print(f"  Speedup: {duration1/duration2:.1f}x")
     else:
-        print(f"  Speedup: >1000x (instant)")
+        print("  Speedup: >1000x (instant)")
     
     # Cache statistics
     stats = cache.get_stats()
-    print(f"\nCache Statistics:")
+    print("\nCache Statistics:")
     print(f"  Hits: {stats['hits']}")
     print(f"  Misses: {stats['misses']}")
     print(f"  Hit rate: {stats['hit_rate']:.1%}")
@@ -152,7 +153,7 @@ def example_4_resource_monitoring():
     
     # Get full summary
     summary = monitor.get_summary()
-    print(f"\nFull Summary:")
+    print("\nFull Summary:")
     print(f"  Timestamp: {summary['timestamp']}")
     print(f"  Memory RSS: {summary['memory']['rss'] / 1024 / 1024:.1f} MB")
     print(f"  CPU %: {summary['cpu']['percent']:.1f}%")
@@ -197,13 +198,13 @@ def example_5_performance_optimizer():
     # Get performance report
     report = optimizer.get_performance_report()
     
-    print(f"\nPerformance Report:")
-    print(f"  Scan cache stats:")
+    print("\nPerformance Report:")
+    print("  Scan cache stats:")
     print(f"    Hits: {report['scan_cache_stats']['hits']}")
     print(f"    Misses: {report['scan_cache_stats']['misses']}")
     print(f"    Size: {report['scan_cache_stats']['size']}")
     
-    print(f"  Resource usage:")
+    print("  Resource usage:")
     print(f"    Memory: {report['resource_usage']['memory']['rss'] / 1024 / 1024:.1f} MB")
     print(f"    CPU: {report['resource_usage']['cpu']['percent']:.1f}%")
     
@@ -247,10 +248,10 @@ def example_6_export_metrics():
     import json
     data = json.loads(output_file.read_text())
     
-    print(f"\nExported data:")
+    print("\nExported data:")
     print(f"  Timestamp: {data['timestamp']}")
     print(f"  Total metrics: {len(data['metrics'])}")
-    print(f"  Operations:")
+    print("  Operations:")
     for op, stats in data['summary'].items():
         print(f"    {op}: {stats['count']} executions, avg {stats['avg_duration']:.4f}s")
 
@@ -324,7 +325,7 @@ def example_8_ttl_expiration():
     print(f"  immortal: {cache.get('immortal')}")  # Still valid
     
     stats = cache.get_stats()
-    print(f"\nCache stats:")
+    print("\nCache stats:")
     print(f"  Expirations: {stats['expirations']}")
     print(f"  Current size: {stats['size']}")
 

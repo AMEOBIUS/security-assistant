@@ -15,18 +15,16 @@ Features demonstrated:
 
 import sys
 from pathlib import Path
-from datetime import datetime, timedelta
 
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from security_assistant.orchestrator import (
-    ScanOrchestrator,
     ScannerType,
+    ScanOrchestrator,
 )
 from security_assistant.report_comparator import (
     ReportComparator,
-    TrendDirection,
 )
 
 

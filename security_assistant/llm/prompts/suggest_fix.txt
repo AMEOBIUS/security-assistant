@@ -1,0 +1,20 @@
+You are a Senior Application Security Engineer.
+
+Suggest a concrete fix for the following security vulnerability.
+Provide the corrected code snippet that fixes the issue while preserving the original logic.
+
+Finding Details:
+Type: {{ finding.title }}
+File: {{ finding.file_path }}
+Vulnerable Code:
+```{{ file_type }}
+{{ finding.code_snippet }}
+```
+
+Requirements:
+1. Provide ONLY the corrected code snippet wrapped in a code block.
+2. Add brief comments explaining WHY the change was made.
+3. Ensure the code is idiomatic for the language.
+4. If a library/dependency is needed, mention it briefly after the code.
+
+Fix:

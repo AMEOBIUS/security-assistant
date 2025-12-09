@@ -14,21 +14,21 @@ Tests cover:
 """
 
 import json
-import pytest
-from unittest.mock import Mock, patch, MagicMock
 from datetime import datetime
-from pathlib import Path
+from unittest.mock import Mock, patch
 
-from security_assistant.scanners.trivy_scanner import (
-    TrivyScanner,
-    TrivyFinding,
-    TrivyScanResult,
-    TrivySeverity,
-    TrivyScanType,
-    TrivyScannerError,
-    TrivyNotInstalledError,
-)
+import pytest
+
 from security_assistant.gitlab_api import IssueData
+from security_assistant.scanners.trivy_scanner import (
+    TrivyFinding,
+    TrivyNotInstalledError,
+    TrivyScanner,
+    TrivyScannerError,
+    TrivyScanResult,
+    TrivyScanType,
+    TrivySeverity,
+)
 
 
 class TestTrivyFinding:

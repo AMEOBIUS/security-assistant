@@ -5,21 +5,18 @@ Tests comparison functionality, trend analysis, and diff generation.
 """
 
 import unittest
-from datetime import datetime, timedelta
-from pathlib import Path
+from datetime import datetime
 
-from security_assistant.report_comparator import (
-    ReportComparator,
-    ComparisonResult,
-    FindingDiff,
-    FindingStatus,
-    TrendDirection,
-)
 from security_assistant.orchestrator import (
-    OrchestrationResult,
-    UnifiedFinding,
     FindingSeverity,
+    OrchestrationResult,
     ScannerType,
+    UnifiedFinding,
+)
+from security_assistant.report_comparator import (
+    FindingStatus,
+    ReportComparator,
+    TrendDirection,
 )
 
 

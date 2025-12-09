@@ -9,13 +9,14 @@ from pathlib import Path
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
+import json
+from unittest.mock import Mock, patch
+
 from security_assistant.scanners.bandit_scanner import (
     BanditFinding,
+    BanditScanner,
     ScanResult,
-    BanditScanner
 )
-from unittest.mock import Mock, patch
-import json
 
 
 def demo_scanner_without_bandit():
@@ -64,8 +65,8 @@ def demo_scanner_without_bandit():
         # Create scanner
         scanner = BanditScanner(min_severity="MEDIUM")
         print("✅ Scanner initialized")
-        print(f"   Min Severity: MEDIUM")
-        print(f"   Min Confidence: LOW")
+        print("   Min Severity: MEDIUM")
+        print("   Min Confidence: LOW")
         print()
         
         # Parse sample output

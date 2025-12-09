@@ -77,11 +77,12 @@ Why not just run the tools individually?
 
 ### Key Capabilities
 1.  **Intelligent Orchestration**: Runs scanners in parallel, handles timeouts, and normalizes results.
-2.  **Context Awareness**:
+2.  **LLM Integration (New!)**: Explain vulnerabilities and suggest fixes using AI (NVIDIA, OpenAI, Anthropic).
+3.  **Context Awareness**:
     *   **KEV**: "Is this CVE actively exploited in the wild?" (Source: CISA)
     *   **Reachability**: "Do we actually import this vulnerable library?"
     *   **FP Detection**: "Is this just test code or a mock?"
-3.  **CI/CD Ready**: Outputs SARIF for GitHub Security tab and GitLab Code Quality JSON.
+4.  **CI/CD Ready**: Outputs SARIF for GitHub Security tab and GitLab Code Quality JSON.
 
 ---
 

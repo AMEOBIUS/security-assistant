@@ -8,16 +8,16 @@ into various CI/CD pipelines programmatically.
 import json
 import sys
 from pathlib import Path
-from typing import Dict, Any, List
+from typing import Any, Dict
 
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
+from security_assistant.config import load_config
 from security_assistant.orchestrator import ScanOrchestrator
 from security_assistant.scanners.bandit_scanner import BanditScanner
 from security_assistant.scanners.semgrep_scanner import SemgrepScanner
 from security_assistant.scanners.trivy_scanner import TrivyScanner
-from security_assistant.config import load_config
 
 
 def example_gitlab_ci() -> int:
@@ -75,10 +75,10 @@ def example_gitlab_ci() -> int:
         }, f, indent=2)
     
     # Print summary
-    print(f"\n✅ Scan complete!")
+    print("\n✅ Scan complete!")
     print(f"Total findings: {len(result.deduplicated_findings)}")
     print(f"Execution time: {result.execution_time_seconds:.2f}s")
-    print(f"\nFindings by severity:")
+    print("\nFindings by severity:")
     for severity, count in sorted(result.findings_by_severity.items()):
         print(f"  {severity}: {count}")
     
@@ -192,7 +192,7 @@ def example_github_actions() -> Dict[str, Any]:
     with open(output_dir / 'results.sarif', 'w') as f:
         json.dump(sarif_report, f, indent=2)
     
-    print(f"\n✅ SARIF report generated")
+    print("\n✅ SARIF report generated")
     print(f"Total findings: {len(result.deduplicated_findings)}")
     
     return {
@@ -288,11 +288,11 @@ def example_custom_pipeline() -> None:
     try:
         # Create custom configuration
         from security_assistant.config import (
-            SecurityAssistantConfig,
             BanditConfig,
-            SemgrepConfig,
             OrchestratorConfig,
-            ThresholdConfig
+            SecurityAssistantConfig,
+            SemgrepConfig,
+            ThresholdConfig,
         )
         
         config = SecurityAssistantConfig(
@@ -345,7 +345,7 @@ def example_custom_pipeline() -> None:
         critical = result.findings_by_severity.get('CRITICAL', 0)
         high = result.findings_by_severity.get('HIGH', 0)
         
-        print(f"\n📊 Scan Results:")
+        print("\n📊 Scan Results:")
         print(f"  Total findings: {len(result.deduplicated_findings)}")
         print(f"  Critical: {critical}")
         print(f"  High: {high}")

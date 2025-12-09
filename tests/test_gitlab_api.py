@@ -4,19 +4,20 @@ Tests include mocking to avoid real API calls.
 """
 
 import os
-import pytest
 import time
-from unittest.mock import Mock, patch, MagicMock
-from requests.exceptions import Timeout, ConnectionError
+from unittest.mock import Mock, patch
+
+import pytest
+from requests.exceptions import ConnectionError, Timeout
 
 from security_assistant.gitlab_api import (
     GitLabAPI,
-    IssueData,
-    RateLimiter,
-    RateLimitConfig,
     GitLabAPIError,
     GitLabAuthError,
-    GitLabRateLimitError
+    GitLabRateLimitError,
+    IssueData,
+    RateLimitConfig,
+    RateLimiter,
 )
 
 

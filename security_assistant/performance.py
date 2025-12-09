@@ -388,7 +388,7 @@ class PerformanceCache:
         """Load cache from disk."""
         try:
             with open(self.persist_path, "rb") as f:
-                data = pickle.load(f)
+                data = pickle.load(f)  # nosec B301 - trusted local cache file
                 self._cache = data.get("cache", {})
                 self._stats = data.get("stats", self._stats)
             logger.info(

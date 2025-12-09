@@ -1,9 +1,12 @@
 """Tests for HTMLReporter - FIXED"""
-import pytest
 from pathlib import Path
-from security_assistant.reporting.html_reporter import HTMLReporter
+
+import pytest
+
 from security_assistant.orchestrator import FindingSeverity, ScannerType
-from tests.conftest_reporters import create_test_result, create_test_finding
+from security_assistant.reporting.html_reporter import HTMLReporter
+from tests.conftest_reporters import create_test_finding, create_test_result
+
 
 @pytest.fixture
 def sample_finding():

@@ -4,9 +4,10 @@ Web Dashboard Backend
 FastAPI application to serve scan results and metrics.
 """
 
+import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-import uvicorn
+
 from .routers import router as api_router
 
 app = FastAPI(

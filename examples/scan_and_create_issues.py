@@ -12,17 +12,17 @@ Usage:
     python examples/scan_and_create_issues.py --directory . --group-by-file
 """
 
-import os
-import sys
 import argparse
+import sys
 from pathlib import Path
 
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from security_assistant.scanners.bandit_scanner import BanditScanner, BanditScannerError
-from security_assistant.gitlab_api import GitLabAPI, GitLabAPIError
 from dotenv import load_dotenv
+
+from security_assistant.gitlab_api import GitLabAPI, GitLabAPIError
+from security_assistant.scanners.bandit_scanner import BanditScanner, BanditScannerError
 
 
 def main():
@@ -84,7 +84,7 @@ def main():
     
     # Initialize scanner
     try:
-        print(f"Initializing Bandit scanner...")
+        print("Initializing Bandit scanner...")
         print(f"  Min Severity: {args.min_severity}")
         print(f"  Min Confidence: {args.min_confidence}")
         
@@ -108,7 +108,7 @@ def main():
             print(f"  Recursive: {args.recursive}")
             result = scanner.scan_directory(args.directory, recursive=args.recursive)
         
-        print(f"✅ Scan complete")
+        print("✅ Scan complete")
         print()
         
         # Display results
@@ -160,7 +160,7 @@ def main():
     
     # Create issues in GitLab
     try:
-        print(f"Connecting to GitLab...")
+        print("Connecting to GitLab...")
         api = GitLabAPI()
         print(f"✅ Connected to {api.gitlab_url}")
         print()

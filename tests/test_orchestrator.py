@@ -10,22 +10,31 @@ Tests cover:
 - Issue conversion
 """
 
-import pytest
 import tempfile
-import shutil
 from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock, patch
+
+import pytest
 
 from security_assistant.orchestrator import (
-    ScanOrchestrator,
-    ScannerType,
     FindingSeverity,
-    UnifiedFinding,
     OrchestrationResult,
+    ScannerType,
+    ScanOrchestrator,
+    UnifiedFinding,
 )
-from security_assistant.scanners.bandit_scanner import BanditScanner, BanditFinding, ScanResult as BanditScanResult
-from security_assistant.scanners.semgrep_scanner import SemgrepScanner, SemgrepFinding, SemgrepScanResult
-from security_assistant.scanners.trivy_scanner import TrivyScanner, TrivyFinding, TrivyScanResult, TrivySeverity, TrivyScanType
+from security_assistant.scanners.bandit_scanner import BanditFinding
+from security_assistant.scanners.bandit_scanner import ScanResult as BanditScanResult
+from security_assistant.scanners.semgrep_scanner import (
+    SemgrepFinding,
+    SemgrepScanResult,
+)
+from security_assistant.scanners.trivy_scanner import (
+    TrivyFinding,
+    TrivyScanResult,
+    TrivyScanType,
+    TrivySeverity,
+)
 
 
 class TestScanOrchestrator:

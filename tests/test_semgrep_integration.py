@@ -3,18 +3,15 @@ Integration tests for Semgrep scanner.
 Tests end-to-end workflows with mocked GitLab API.
 """
 
-import pytest
 import json
-from unittest.mock import Mock, patch, MagicMock
-from pathlib import Path
+from unittest.mock import Mock, patch
 
+import pytest
+
+from security_assistant.gitlab_api import GitLabAPI, IssueData
 from security_assistant.scanners.semgrep_scanner import (
     SemgrepScanner,
-    SemgrepScanResult,
-    SemgrepFinding
 )
-from security_assistant.gitlab_api import GitLabAPI, IssueData
-
 
 # Sample multi-language vulnerable code
 SAMPLE_VULNERABLE_CODE = {

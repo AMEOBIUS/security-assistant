@@ -17,8 +17,8 @@ from pathlib import Path
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from security_assistant.orchestrator import ScanOrchestrator, ScannerType
-from security_assistant.report_generator import ReportGenerator, ReportFormat
+from security_assistant.orchestrator import ScannerType, ScanOrchestrator
+from security_assistant.report_generator import ReportFormat, ReportGenerator
 
 
 def main():
@@ -36,7 +36,7 @@ def main():
     print("\n1. Scanning example vulnerable code...")
     result = orchestrator.scan_file("examples/vulnerable_code.py")
     
-    print(f"\nScan completed:")
+    print("\nScan completed:")
     print(f"  - Total findings: {result.total_findings}")
     print(f"  - Unique findings: {len(result.deduplicated_findings)}")
     print(f"  - Critical: {result.critical_count}")

@@ -6,9 +6,10 @@ Tests CISA KEV catalog integration for actively exploited vulnerabilities.
 Version: 1.0.0
 """
 
-import pytest
 from datetime import datetime, timedelta
 from unittest.mock import Mock, patch
+
+import pytest
 
 from security_assistant.enrichment.kev import KEVClient, KEVEntry
 

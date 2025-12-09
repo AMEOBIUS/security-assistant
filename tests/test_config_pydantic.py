@@ -2,29 +2,27 @@
 Tests for security_assistant.config_pydantic module (Pydantic v2 implementation)
 """
 
-import pytest
-import os
 import json
+import os
 import tempfile
-from pathlib import Path
 from unittest.mock import patch
 
+import pytest
+from pydantic import ValidationError
+
 from security_assistant.config import (
-    SecurityAssistantConfig,
     BanditConfig,
-    SemgrepConfig,
-    TrivyConfig,
-    OrchestratorConfig,
-    ReportConfig,
-    GitLabConfig,
-    ThresholdConfig,
     ConfigManager,
     DeduplicationStrategy,
+    GitLabConfig,
+    OrchestratorConfig,
     ReportFormat,
+    SecurityAssistantConfig,
+    SemgrepConfig,
+    TrivyConfig,
     get_config,
     load_config,
 )
-from pydantic import ValidationError
 
 
 class TestScannerConfigs:
@@ -133,7 +131,7 @@ class TestMainConfig:
         try:
             config.save(temp_path, format="json")
 
-            with open(temp_path, "r") as f:
+            with open(temp_path) as f:
                 data = json.load(f)
 
             assert "bandit" in data
@@ -397,7 +395,7 @@ class TestConfigManager:
 
             assert os.path.exists(temp_path)
 
-            with open(temp_path, "r") as f:
+            with open(temp_path) as f:
                 data = json.load(f)
 
             assert "bandit" in data

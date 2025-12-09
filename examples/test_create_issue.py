@@ -7,8 +7,8 @@ that the integration is working correctly.
 
 import os
 import sys
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
 
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -88,7 +88,7 @@ This issue can be safely closed. The Security Assistant is ready to:
     try:
         created_issue = api.create_issue(project_id, issue_data)
         
-        print(f"   ✓ Issue created successfully!")
+        print("   ✓ Issue created successfully!")
         print()
         print("   Issue Details:")
         print(f"   - IID: #{created_issue['iid']}")

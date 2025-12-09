@@ -1,18 +1,19 @@
 
-import pytest
-from unittest.mock import MagicMock, patch
 from pathlib import Path
-from datetime import datetime
+from unittest.mock import MagicMock, patch
+
+import pytest
 
 from security_assistant.orchestrator import (
-    ScanOrchestrator, 
-    OrchestrationResult, 
     BulkScanResult,
-    UnifiedFinding,
     FindingSeverity,
-    ScannerType
+    OrchestrationResult,
+    ScannerType,
+    ScanOrchestrator,
+    UnifiedFinding,
 )
-from security_assistant.report_generator import ReportGenerator, ReportFormat
+from security_assistant.report_generator import ReportFormat, ReportGenerator
+
 
 @pytest.fixture
 def sample_orchestration_result():
@@ -91,8 +92,10 @@ class TestBulkOperations:
             
             # Side effect for Path constructor
             def path_side_effect(arg):
-                if arg == "dir1": return dir_path
-                if arg == "file1.py": return file_path
+                if arg == "dir1":
+                    return dir_path
+                if arg == "file1.py":
+                    return file_path
                 return MagicMock()
             
             MockPath.side_effect = path_side_effect

@@ -37,19 +37,18 @@ import argparse
 import os
 import sys
 from pathlib import Path
-from typing import Optional
 
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from security_assistant.scanners.trivy_scanner import (
-    TrivyScanner,
-    TrivySeverity,
-    TrivyScanType,
-    TrivyScannerError,
-    TrivyNotInstalledError,
-)
 from security_assistant.gitlab_client import GitLabClient
+
+from security_assistant.scanners.trivy_scanner import (
+    TrivyNotInstalledError,
+    TrivyScanner,
+    TrivyScannerError,
+    TrivySeverity,
+)
 
 
 def print_banner():
@@ -119,7 +118,7 @@ def print_findings_detail(scan_result, max_findings: int = 10):
             if finding.fixed_version:
                 print(f"   Fixed:     {finding.fixed_version}")
             else:
-                print(f"   Fixed:     Not available")
+                print("   Fixed:     Not available")
         
         if finding.cvss_score:
             print(f"   CVSS:      {finding.cvss_score}")

@@ -5,7 +5,9 @@ Demonstrates basic usage of GitLab API integration.
 
 import os
 from pathlib import Path
+
 from dotenv import load_dotenv
+
 from security_assistant.gitlab_api import GitLabAPI, IssueData
 
 # Load environment variables from .env file
@@ -88,7 +90,7 @@ cursor.execute(query, (user_input,))
         # Create the issue
         try:
             result = api.create_issue(project_id, issue_data)
-            print(f"\n✅ Issue created successfully!")
+            print("\n✅ Issue created successfully!")
             print(f"   Issue #: {result['iid']}")
             print(f"   URL: {result['web_url']}")
             print(f"   ID: {result['id']}")

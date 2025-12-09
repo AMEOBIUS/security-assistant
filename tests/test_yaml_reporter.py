@@ -1,10 +1,13 @@
 """Tests for YAMLReporter - FIXED"""
+from pathlib import Path
+
 import pytest
 import yaml
-from pathlib import Path
-from security_assistant.reporting.yaml_reporter import YAMLReporter
+
 from security_assistant.orchestrator import FindingSeverity, ScannerType
-from tests.conftest_reporters import create_test_result, create_test_finding
+from security_assistant.reporting.yaml_reporter import YAMLReporter
+from tests.conftest_reporters import create_test_finding, create_test_result
+
 
 @pytest.fixture
 def sample_finding():

@@ -9,10 +9,11 @@ WARNING: DO NOT use this code in production!
 # PYTHON VULNERABILITIES
 # ============================================================================
 
+import hashlib
 import os
 import pickle
 import subprocess
-import hashlib
+
 from flask import Flask, request
 
 app = Flask(__name__)
@@ -59,6 +60,8 @@ def hash_password(password):
 
 # B506: Unsafe YAML load
 import yaml
+
+
 def load_config(config_file):
     with open(config_file) as f:
         config = yaml.load(f)  # Dangerous: arbitrary code execution
@@ -70,6 +73,8 @@ def hash_data(data):
 
 # B501: Request without certificate validation
 import requests
+
+
 def fetch_data(url):
     response = requests.get(url, verify=False)  # Dangerous: MITM attack
     return response.text
@@ -86,6 +91,8 @@ def slow_request(url):
 
 # B703: Django XSS
 from django.utils.safestring import mark_safe
+
+
 def render_user_input(user_input):
     return mark_safe(user_input)  # XSS vulnerability
 

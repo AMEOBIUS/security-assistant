@@ -26,23 +26,21 @@ Usage:
     python scan_with_semgrep.py --directory . --custom-rules rules.yaml --project namespace/project
 """
 
-import os
-import sys
 import argparse
 import logging
+import os
+import sys
 from pathlib import Path
-from typing import Optional
 
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
+from security_assistant.gitlab_api import GitLabAPI
 from security_assistant.scanners.semgrep_scanner import (
+    SemgrepNotInstalledError,
     SemgrepScanner,
     SemgrepScannerError,
-    SemgrepNotInstalledError
 )
-from security_assistant.gitlab_api import GitLabAPI
-
 
 # Configure logging
 logging.basicConfig(
@@ -132,7 +130,7 @@ def print_summary(scan_result, issues):
     print("=" * 70)
     print(f"Files scanned: {scan_result.files_scanned}")
     print(f"Languages detected: {', '.join(sorted(scan_result.languages)) if scan_result.languages else 'None'}")
-    print(f"\nFindings:")
+    print("\nFindings:")
     print(f"  🔴 Errors:   {scan_result.error_count}")
     print(f"  🟡 Warnings: {scan_result.warning_count}")
     print(f"  🟢 Info:     {scan_result.info_count}")
@@ -153,7 +151,7 @@ def print_issue_preview(issue, index):
     print(f"Title: {issue.title}")
     print(f"Labels: {', '.join(issue.labels)}")
     print(f"Confidential: {issue.confidential}")
-    print(f"\nDescription preview:")
+    print("\nDescription preview:")
     lines = issue.description.split('\n')
     for line in lines[:10]:  # Show first 10 lines
         print(f"  {line}")

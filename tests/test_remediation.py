@@ -1,5 +1,7 @@
 import pytest
-from security_assistant.remediation.advisor import RemediationAdvisor, RemediationAdvice
+
+from security_assistant.remediation.advisor import RemediationAdvisor
+
 
 class TestRemediationAdvisor:
     

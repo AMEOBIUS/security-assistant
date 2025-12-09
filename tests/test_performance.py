@@ -2,18 +2,15 @@
 Tests for performance monitoring and optimization.
 """
 
-import pytest
 import time
-import tempfile
-from pathlib import Path
 
 from security_assistant.performance import (
+    CacheEntry,
+    PerformanceCache,
     PerformanceMetrics,
     PerformanceMonitor,
-    PerformanceCache,
-    CacheEntry,
-    ResourceMonitor,
     PerformanceOptimizer,
+    ResourceMonitor,
     cache_key,
 )
 

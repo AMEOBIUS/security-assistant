@@ -4,11 +4,12 @@ Tests the complete workflow: scan → create issue.
 """
 
 import os
-import pytest
 from unittest.mock import Mock, patch
 
-from security_assistant.scanners.bandit_scanner import BanditScanner, BanditFinding
+import pytest
+
 from security_assistant.gitlab_api import GitLabAPI, IssueData
+from security_assistant.scanners.bandit_scanner import BanditFinding, BanditScanner
 
 
 class TestScannerGitLabIntegration:

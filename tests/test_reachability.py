@@ -2,16 +2,17 @@
 Tests for Reachability Analysis
 """
 
-import unittest
-import os
 import shutil
 import tempfile
+import unittest
 from pathlib import Path
-from unittest.mock import MagicMock
 
 from security_assistant.analysis.reachability.ast_parser import PythonParser
 from security_assistant.analysis.reachability.import_tracker import ImportTracker
-from security_assistant.analysis.reachability.reachability_analyzer import ReachabilityAnalyzer, ReachabilityResult
+from security_assistant.analysis.reachability.reachability_analyzer import (
+    ReachabilityAnalyzer,
+)
+
 
 class TestReachability(unittest.TestCase):
     

@@ -18,8 +18,8 @@ from pathlib import Path
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from security_assistant.orchestrator import ScanOrchestrator, ScannerType
 from security_assistant.gitlab_api import GitLabAPI
+from security_assistant.orchestrator import ScannerType, ScanOrchestrator
 
 
 def main():
@@ -113,7 +113,7 @@ def main():
         
         # Ask for confirmation
         print(f"Found {len(result.deduplicated_findings)} unique findings.")
-        print(f"Create issues for top 5 priority findings? (y/n): ", end="")
+        print("Create issues for top 5 priority findings? (y/n): ", end="")
         
         try:
             response = input().strip().lower()

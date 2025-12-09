@@ -10,18 +10,13 @@ Tests end-to-end workflows:
 """
 
 import json
-import pytest
-from unittest.mock import Mock, patch, MagicMock
-from datetime import datetime
+from unittest.mock import Mock, patch
 
 from security_assistant.scanners.trivy_scanner import (
     TrivyScanner,
-    TrivySeverity,
     TrivyScanType,
-    TrivyFinding,
-    TrivyScanResult,
+    TrivySeverity,
 )
-from security_assistant.gitlab_api import IssueData
 
 
 class TestTrivyIntegration:

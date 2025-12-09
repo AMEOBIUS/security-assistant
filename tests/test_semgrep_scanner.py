@@ -3,20 +3,18 @@ Unit tests for Semgrep scanner.
 Tests all core functionality with mocked Semgrep calls.
 """
 
-import pytest
 import json
-from unittest.mock import Mock, patch, MagicMock
-from datetime import datetime
-from pathlib import Path
+from unittest.mock import Mock, patch
+
+import pytest
 
 from security_assistant.scanners.semgrep_scanner import (
-    SemgrepScanner,
     SemgrepFinding,
-    SemgrepScanResult,
+    SemgrepNotInstalledError,
+    SemgrepScanner,
     SemgrepScannerError,
-    SemgrepNotInstalledError
+    SemgrepScanResult,
 )
-
 
 # Sample Semgrep JSON output
 SAMPLE_SEMGREP_OUTPUT = {

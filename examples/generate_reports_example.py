@@ -14,8 +14,8 @@ from pathlib import Path
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from security_assistant.orchestrator import ScanOrchestrator, ScannerType
-from security_assistant.report_generator import ReportGenerator, ReportFormat
+from security_assistant.orchestrator import ScannerType, ScanOrchestrator
+from security_assistant.report_generator import ReportFormat, ReportGenerator
 
 
 def main():

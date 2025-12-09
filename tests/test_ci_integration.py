@@ -1,7 +1,7 @@
-import pytest
 from pathlib import Path
+
+import pytest
 import yaml
-import os
 
 
 class TestCIIntegration:
@@ -17,7 +17,7 @@ class TestCIIntegration:
     def test_gitlab_ci_template_valid(self):
         ci_file = Path("templates/ci/gitlab-ci.yml")
         assert ci_file.exists()
-        with open(ci_file, 'r') as f:
+        with open(ci_file) as f:
             data = yaml.safe_load(f)
         
         assert "security-assistant-scan" in data
@@ -30,7 +30,7 @@ class TestCIIntegration:
     def test_github_actions_workflow_valid(self):
         gh_file = Path("templates/ci/github-actions.yml")
         assert gh_file.exists()
-        with open(gh_file, 'r') as f:
+        with open(gh_file) as f:
             data = yaml.safe_load(f)
             
         assert data["name"] == "Security Assistant Scan"
