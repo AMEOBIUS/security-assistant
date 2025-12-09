@@ -23,9 +23,10 @@
 - **Architecture:** Pydantic v2, persistent caching, lazy loading
 
 ### 🎯 What's Next:
-- LLM Integration (v1.1.0)
-- Auto-PoC Generation (v1.2.0)
-- Natural Language Queries (v1.3.0)
+- LLM Integration (v1.1.0) - Jan 2026
+- Auto-PoC Generation (v1.2.0) - Jan 2026
+- Natural Language Queries (v1.3.0) - Feb 2026
+- **🔥 Offensive Security (v1.4.0-1.8.0) - Q1-Q2 2026** ← NEW PRIORITY
 
 ---
 
@@ -402,7 +403,61 @@
 
 ---
 
+---
+
+## 🔥 NEW: Offensive Security Track (v1.4.0-1.8.0)
+
+**Priority:** CRITICAL (for community growth)  
+**Timeline:** Q1-Q2 2026 (18 weeks)  
+**Target Audience:** Pentesters, Red Teamers, Bug Bounty Hunters
+
+### **Why Offensive Security First?**
+1. **Viral Growth:** Pentesters share tools on Twitter, Discord, conferences
+2. **Credibility:** "Used by pentesters" = trusted by enterprises
+3. **Community:** Active users create content, tutorials, exploits
+4. **Monetization:** Bug bounty platforms, pentesting firms, training
+
+### **5 Phases:**
+
+**Phase 1: Exploit Development (v1.4.0)** - Mar 15, 2026
+- Multi-stage exploit chains
+- LLM-powered exploit customization
+- Shellcode generator
+- Exploit templates library
+
+**Phase 2: Web App Testing (v1.5.0)** - Apr 15, 2026
+- OWASP ZAP integration
+- Burp Suite integration
+- SQLMap integration
+- XSStrike integration
+
+**Phase 3: Network & Infrastructure (v1.6.0)** - May 15, 2026
+- Nmap integration
+- Masscan integration
+- Metasploit integration
+- Credential stuffing
+
+**Phase 4: Evasion & Stealth (v1.7.0)** - Jun 1, 2026
+- WAF bypass engine
+- IDS/IPS evasion
+- AV/EDR evasion
+- Stealth scanning
+
+**Phase 5: Training & Community (v1.8.0)** - Jun 15, 2026
+- Vulnerable lab environments
+- Exploit tutorials
+- CTF mode
+- Bug bounty integration
+
+**Total Effort:** 219-276 hours (18 weeks)
+
+**Full Details:** `docs/roadmaps/OFFENSIVE_SECURITY_ROADMAP.md`
+
+---
+
 **Created:** 2025-12-09  
 **Last Updated:** 2025-12-09  
 **Status:** Active Planning  
 **Session:** 62
+
+**🔥 NEW PRIORITY: Offensive Security Track added**

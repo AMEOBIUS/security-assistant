@@ -23,8 +23,10 @@ Get running in seconds. **Works on Linux/macOS/WSL; Windows via PowerShell is su
 ### 1. Install
 ```bash
 pip install security-assistant
-# Or if you use pipx (recommended)
-pipx install security-assistant
+
+# Install required scanners (if not already present)
+pip install bandit semgrep
+# Note: Trivy and Nuclei must be installed separately (see docs/installation.md)
 ```
 
 ### 2. Scan
@@ -36,10 +38,7 @@ security-assistant scan .
 ### 3. View Report
 Open `security-reports/report.html` in your browser to see the interactive dashboard.
 
-<!-- TODO: Add screenshot when available
-![Security Assistant Dashboard](docs/assets/dashboard-screenshot.png)
-*Interactive HTML report with KEV enrichment, reachability analysis, and remediation guidance*
--->
+> **Note:** A screenshot of the dashboard will be available soon.
 
 ---
 
@@ -139,6 +138,7 @@ security_scan:
 - [Configuration Guide](docs/configuration.md)
 - [Scanner Documentation](docs/scanners/)
 - [CI/CD Integration](docs/integrations/)
+- [Product Roadmap](ROADMAP.md)
 
 ---
 

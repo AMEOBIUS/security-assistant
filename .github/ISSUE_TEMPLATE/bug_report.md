@@ -1,35 +1,31 @@
 ---
-name: Bug Report
-about: Report a bug or unexpected behavior
-title: '[BUG] '
+name: Bug report
+about: Create a report to help us improve
+title: ''
 labels: bug
 assignees: ''
 ---
 
-## Bug Description
+**Describe the bug**
 A clear and concise description of what the bug is.
 
-## Steps to Reproduce
-1. Run command '...'
-2. With configuration '...'
+**To Reproduce**
+Steps to reproduce the behavior:
+1. Run scan with command '...'
+2. Configuration used '...'
 3. See error
 
-## Expected Behavior
-What you expected to happen.
+**Expected behavior**
+A clear and concise description of what you expected to happen.
 
-## Actual Behavior
-What actually happened.
+**Screenshots**
+If applicable, add screenshots to help explain your problem.
 
-## Environment
-- OS: [e.g., Ubuntu 22.04, Windows 11]
-- Python Version: [e.g., 3.11.5]
-- Security Assistant Version: [e.g., 1.0.0]
-- Scanner Versions: [e.g., Bandit 1.7.5, Semgrep 1.45.0]
+**Environment (please complete the following information):**
+ - OS: [e.g. Ubuntu 22.04, Windows 11]
+ - Python Version: [e.g. 3.11]
+ - Security Assistant Version [e.g. 1.3.0]
+ - Scanners installed: [e.g. Bandit, Semgrep]
 
-## Logs/Output
-```
-Paste relevant logs or error messages here
-```
-
-## Additional Context
+**Additional context**
 Add any other context about the problem here.
