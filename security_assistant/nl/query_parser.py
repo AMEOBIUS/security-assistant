@@ -4,13 +4,13 @@ Natural Language Query Parser.
 Converts natural language text into structured search queries using LLM or heuristics.
 """
 
-import logging
 import json
+import logging
 import re
-from typing import Dict, Any, Optional
+from typing import Any, Dict
 
+from security_assistant.nl.schema import SearchFilters, SearchIntent, StructuredQuery
 from security_assistant.services.llm_service import LLMService
-from security_assistant.nl.schema import StructuredQuery, SearchIntent, SearchFilters
 
 logger = logging.getLogger(__name__)
 
@@ -99,18 +99,25 @@ Output JSON:
 
         # Detect Severity
         severities = []
-        if "critical" in query_lower: severities.append("CRITICAL")
-        if "high" in query_lower: severities.append("HIGH")
-        if "medium" in query_lower: severities.append("MEDIUM")
-        if "low" in query_lower: severities.append("LOW")
+        if "critical" in query_lower:
+            severities.append("CRITICAL")
+        if "high" in query_lower:
+            severities.append("HIGH")
+        if "medium" in query_lower:
+            severities.append("MEDIUM")
+        if "low" in query_lower:
+            severities.append("LOW")
         if severities:
             filters.severity = severities
 
         # Detect Scanner
         scanners = []
-        if "bandit" in query_lower: scanners.append("bandit")
-        if "semgrep" in query_lower: scanners.append("semgrep")
-        if "trivy" in query_lower: scanners.append("trivy")
+        if "bandit" in query_lower:
+            scanners.append("bandit")
+        if "semgrep" in query_lower:
+            scanners.append("semgrep")
+        if "trivy" in query_lower:
+            scanners.append("trivy")
         if scanners:
             filters.scanner = scanners
 

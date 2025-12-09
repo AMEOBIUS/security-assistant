@@ -5,10 +5,9 @@ Executes structured queries against scan results.
 """
 
 import logging
-from typing import Dict, List, Any, Union
+from typing import Any, Dict, List
 
-from security_assistant.nl.schema import StructuredQuery, SearchIntent
-from security_assistant.orchestrator import UnifiedFinding
+from security_assistant.nl.schema import SearchIntent, StructuredQuery
 
 logger = logging.getLogger(__name__)
 

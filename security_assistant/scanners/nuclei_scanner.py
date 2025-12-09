@@ -6,19 +6,15 @@ Wraps the Nuclei CLI tool for DAST scanning of web applications.
 
 import json
 import logging
-import shutil
-import subprocess
 from dataclasses import dataclass
-from pathlib import Path
 from typing import List, Optional
 
+from security_assistant.gitlab_api import IssueData
 from security_assistant.scanners.base_scanner import (
     BaseScanner,
-    ScannerConfig,
     ScannerError,
     ScannerNotInstalledError,
 )
-from security_assistant.gitlab_api import IssueData
 
 logger = logging.getLogger(__name__)
 

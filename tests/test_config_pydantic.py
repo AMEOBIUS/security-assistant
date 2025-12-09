@@ -15,6 +15,7 @@ from security_assistant.config import (
     ConfigManager,
     DeduplicationStrategy,
     GitLabConfig,
+    NucleiConfig,
     OrchestratorConfig,
     ReportFormat,
     SecurityAssistantConfig,
@@ -269,6 +270,7 @@ class TestMainConfig:
                 bandit=BanditConfig(enabled=False),
                 semgrep=SemgrepConfig(enabled=False),
                 trivy=TrivyConfig(enabled=False),
+                nuclei=NucleiConfig(enabled=False),
             )
 
     def test_config_validate_invalid_workers(self):

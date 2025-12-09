@@ -6,11 +6,12 @@ Handles template loading and PoC generation based on finding types.
 
 import logging
 from pathlib import Path
-from typing import Dict, Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
-from jinja2 import Environment, FileSystemLoader, Template
+from jinja2 import Environment, FileSystemLoader
 
 from security_assistant.poc.safety_checker import SafetyChecker
+
 if TYPE_CHECKING:
     from security_assistant.orchestrator import UnifiedFinding
     from security_assistant.poc.enhancers.llm_enhancer import LLMEnhancer

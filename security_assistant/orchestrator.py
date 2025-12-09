@@ -25,11 +25,11 @@ from typing import Any, Dict, List, Optional, Set
 
 from .gitlab_api import IssueData
 from .scanners.bandit_scanner import BanditScanner
+from .scanners.nuclei_scanner import NucleiScanner
 from .scanners.semgrep_scanner import SemgrepScanner
 from .scanners.trivy_scanner import (
     TrivyScanner,
 )
-from .scanners.nuclei_scanner import NucleiScanner
 from .security_validator import MetaSecurityValidator
 
 # Import refactored services

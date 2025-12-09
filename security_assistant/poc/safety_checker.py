@@ -9,7 +9,7 @@ Ensures that generated Proof-of-Concept code does not contain:
 
 import logging
 import re
-from typing import List, Tuple
+from typing import List
 
 logger = logging.getLogger(__name__)
 

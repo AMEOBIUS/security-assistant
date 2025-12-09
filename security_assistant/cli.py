@@ -37,7 +37,11 @@ from security_assistant.config import (
     ReportFormat,
     load_config,
 )
-from security_assistant.orchestrator import ScannerType, ScanOrchestrator, UnifiedFinding
+from security_assistant.orchestrator import (
+    ScannerType,
+    ScanOrchestrator,
+    UnifiedFinding,
+)
 from security_assistant.scanners.bandit_scanner import BanditScanner
 from security_assistant.scanners.semgrep_scanner import SemgrepScanner
 from security_assistant.scanners.trivy_scanner import TrivyScanner
@@ -555,7 +559,8 @@ def cmd_poc(args: argparse.Namespace) -> int:
     """
     import asyncio
     import json
-    from security_assistant.poc import PoCGenerator, PoCError
+
+    from security_assistant.poc import PoCError, PoCGenerator
     from security_assistant.poc.enhancers.llm_enhancer import LLMEnhancer
 
     try:
@@ -568,7 +573,7 @@ def cmd_poc(args: argparse.Namespace) -> int:
             logging.error(f"Report file not found: {report_path}")
             return 1
             
-        with open(report_path, "r", encoding="utf-8") as f:
+        with open(report_path, encoding="utf-8") as f:
             data = json.load(f)
             
         # Find the finding
@@ -662,7 +667,7 @@ def cmd_explain(args: argparse.Namespace) -> int:
             logging.error(f"Report file not found: {report_path}")
             return 1
             
-        with open(report_path, "r", encoding="utf-8") as f:
+        with open(report_path, encoding="utf-8") as f:
             data = json.load(f)
             
         # Find the finding
@@ -725,8 +730,9 @@ def cmd_query(args: argparse.Namespace) -> int:
     """
     import asyncio
     import json
-    from security_assistant.nl.query_parser import QueryParser
+
     from security_assistant.nl.query_executor import QueryExecutor
+    from security_assistant.nl.query_parser import QueryParser
 
     try:
         # Load config
@@ -747,7 +753,7 @@ def cmd_query(args: argparse.Namespace) -> int:
             logging.error(f"Report file not found: {report_path}")
             return 1
             
-        with open(report_path, "r", encoding="utf-8") as f:
+        with open(report_path, encoding="utf-8") as f:
             data = json.load(f)
             
         # Flatten findings from results

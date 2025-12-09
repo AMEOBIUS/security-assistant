@@ -5,13 +5,13 @@ Uses LLM to extract context (URLs, parameters, payloads) from vulnerable code
 to make Proof-of-Concepts executable.
 """
 
-import logging
 import json
+import logging
 from dataclasses import dataclass
-from typing import Optional, Dict, Any
+from typing import Any, Dict
 
-from security_assistant.services.llm_service import LLMService
 from security_assistant.orchestrator import UnifiedFinding
+from security_assistant.services.llm_service import LLMService
 
 logger = logging.getLogger(__name__)
 

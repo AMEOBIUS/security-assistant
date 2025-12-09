@@ -51,25 +51,28 @@ def test_template_selection_xss(generator, xss_finding):
     template = generator._get_template_name(xss_finding)
     assert template == "xss.html.j2"
 
-def test_generate_sqli_poc(generator, sqli_finding):
+@pytest.mark.asyncio
+async def test_generate_sqli_poc(generator, sqli_finding):
     """Test generating SQLi PoC code."""
-    poc_code = generator.generate(sqli_finding)
+    poc_code = await generator.generate(sqli_finding)
     
     assert "import requests" in poc_code
     assert "Possible SQL Injection" in poc_code
     assert "test-sqli-1" in poc_code
     assert "test_sqli" in poc_code
 
-def test_generate_xss_poc(generator, xss_finding):
+@pytest.mark.asyncio
+async def test_generate_xss_poc(generator, xss_finding):
     """Test generating XSS PoC code."""
-    poc_code = generator.generate(xss_finding)
+    poc_code = await generator.generate(xss_finding)
     
     assert "<!DOCTYPE html>" in poc_code
     assert "XSS PoC" in poc_code
     assert "test-xss-1" in poc_code
     assert "<script>alert(1)</script>" in poc_code
 
-def test_unknown_finding_type(generator):
+@pytest.mark.asyncio
+async def test_unknown_finding_type(generator):
     """Test handling of unknown finding types."""
     finding = UnifiedFinding(
         finding_id="test-unknown",
@@ -85,4 +88,4 @@ def test_unknown_finding_type(generator):
     )
     
     with pytest.raises(PoCError, match="No suitable PoC template"):
-        generator.generate(finding)
+        await generator.generate(finding)

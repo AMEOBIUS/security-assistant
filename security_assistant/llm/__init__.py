@@ -24,9 +24,9 @@ from .base_client import (
     LLMRateLimitError,
     LLMResponse,
 )
+from .nvidia_client import NvidiaClient
 from .ollama_client import OllamaClient
 from .openai_client import OpenAIClient
-from .nvidia_client import NvidiaClient
 
 __all__ = [
     # Base
