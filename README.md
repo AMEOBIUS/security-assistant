@@ -1,70 +1,130 @@
 # 🛡️ Security Assistant
 
-**Enterprise-grade security orchestration for everyone. No license required.**
+**Open-source security scanner orchestrator. Free forever, no license required.**
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
-[![CI Status](https://github.com/AMEOBIUS/security-assistant/actions/workflows/ci.yml/badge.svg)](https://github.com/AMEOBIUS/security-assistant/actions)
-[![Code Style: Black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![GitHub release](https://img.shields.io/github/v/tag/AMEOBIUS/security-assistant?label=version)](https://github.com/AMEOBIUS/security-assistant/releases)
+[![Stars](https://img.shields.io/github/stars/AMEOBIUS/security-assistant?style=social)](https://github.com/AMEOBIUS/security-assistant)
 
-**Security Assistant** allows you to run a GitLab Ultimate-level security pipeline locally or in any CI/CD. It orchestrates multiple scanners (Bandit, Semgrep, Trivy), deduplicates findings, and prioritizes them using **Context Intelligence** (KEV, Reachability, False Positive Detection).
+**Security Assistant** orchestrates multiple security scanners (Bandit, Semgrep, Trivy, Nuclei), deduplicates findings, and prioritizes them using **Context Intelligence** (KEV, Reachability, False Positive Detection).
 
-### 🎯 Who is this for?
-*   **Developers:** Get immediate security feedback without waiting for the CI pipeline.
-*   **SecOps:** Get a unified report from multiple tools without writing glue code.
-*   **Startups:** Access enterprise security features (SAST, SCA, Secrets) for free.
+> **🚀 Live Demo:** Try our AI-powered security assistant at [workstation-five.vercel.app](https://workstation-five.vercel.app)
+
+---
+
+## 🎯 Who is this for?
+
+- **Developers:** Get immediate security feedback without waiting for CI pipeline
+- **SecOps:** Unified reports from multiple tools without glue code
+- **Startups:** Enterprise-grade security features (SAST, SCA, Secrets) for free
+- **Pentesters:** CLI-first automation for vulnerability discovery
 
 ---
 
 ## ⚡ Quick Start
 
-Get running in seconds. **Works on Linux/macOS/WSL; Windows via PowerShell is supported.**
+Get running in 30 seconds. Works on **Linux/macOS/WSL**; Windows via PowerShell supported.
 
 ### 1. Install
+
 ```bash
 pip install security-assistant
 
 # Install required scanners (if not already present)
 pip install bandit semgrep
-# Note: Trivy and Nuclei must be installed separately (see docs/installation.md)
+
+# Note: Trivy and Nuclei must be installed separately
+# See docs/installation.md for details
 ```
 
 ### 2. Scan
+
 ```bash
 # Scan current directory
 security-assistant scan .
+
+# With specific scanners
+security-assistant scan . --scanners bandit,semgrep,trivy
+
+# With LLM explanations (bring your own API key)
+export OPENAI_API_KEY=your_api_key_here
+security-assistant scan . --llm openai
 ```
 
 ### 3. View Report
+
 Open `security-reports/report.html` in your browser to see the interactive dashboard.
 
-> **Note:** A screenshot of the dashboard will be available soon.
+---
+
+## 🚀 Key Features
+
+### ✅ Available Now (v1.3.0)
+
+| Feature | Description |
+|---------|-------------|
+| **Multi-Scanner Orchestration** | Bandit, Semgrep, Trivy, Nuclei (DAST) |
+| **Intelligent Deduplication** | Merge identical findings across scanners |
+| **Context Intelligence** | KEV (CISA), Reachability Analysis, FP Detection |
+| **LLM Integration** | Explain vulns & suggest fixes (OpenAI, Anthropic, NVIDIA NIM) |
+| **Auto-PoC Generation** | Template-based exploits for SQLi, XSS (experimental) |
+| **CI/CD Ready** | SARIF for GitHub, JSON for GitLab Code Quality |
+| **Output Formats** | JSON, HTML, Markdown, SARIF |
+
+### 🚧 Roadmap
+
+| Feature | Status |
+|---------|--------|
+| Web Dashboard (React) | 🔨 In Progress |
+| GitHub Actions Plugin | 📋 Examples available |
+| GitLab CI Plugin | 📋 Examples available |
+| SIEM Integration | 🗓️ Planned Q2 2025 |
 
 ---
 
 ## 🏗️ How It Works
 
-```mermaid
-graph LR
-    A[Your Code] --> B(Orchestrator);
-    B --> C{Scanners};
-    C -->|Python| D[Bandit];
-    C -->|Multi-Lang| E[Semgrep];
-    C -->|Deps/Secrets| F[Trivy];
-    D & E & F --> G[Aggregator];
-    G --> H{Intelligence};
-    H -->|CISA Data| I[KEV Check];
-    H -->|AST Analysis| J[Reachability];
-    H -->|Heuristics| K[FP Detection];
-    I & J & K --> L[Unified Report];
-    L --> M[HTML / JSON / SARIF];
+```
+┌─────────────┐
+│   Your Code │
+└──────┬──────┘
+       │
+       v
+┌─────────────────────────────────┐
+│     Security Assistant Core     │
+│  ┌───────────────────────────┐  │
+│  │ Scanner Orchestration     │  │
+│  │ (Parallel Execution)      │  │
+│  └────────┬──────────────────┘  │
+│           │                      │
+│  ┌────────v──────────────────┐  │
+│  │ Normalization & Dedup     │  │
+│  └────────┬──────────────────┘  │
+│           │                      │
+│  ┌────────v──────────────────┐  │
+│  │ Context Intelligence      │  │
+│  │ - KEV (CISA)              │  │
+│  │ - Reachability            │  │
+│  │ - FP Detection            │  │
+│  └────────┬──────────────────┘  │
+│           │                      │
+│  ┌────────v──────────────────┐  │
+│  │ Optional: LLM Analysis    │  │
+│  │ (BYOK - Your API Key)     │  │
+│  └────────┬──────────────────┘  │
+└───────────┼──────────────────────┘
+            │
+            v
+   ┌────────────────┐
+   │ HTML/JSON/SARIF│
+   │    Reports     │
+   └────────────────┘
 ```
 
 ---
 
-## 🚀 Why Security Assistant?
-
-Why not just run the tools individually?
+## 🆚 Why Security Assistant?
 
 | Feature | Standalone Tools | Security Assistant |
 | :--- | :---: | :---: |
@@ -73,96 +133,104 @@ Why not just run the tools individually?
 | **Prioritization** | ❌ Severity only | ✅ Severity + **KEV** + **Reachability** |
 | **Remediation** | ⚠️ Basic messages | ✅ **Code Examples** & Fix Templates |
 | **Setup Time** | 🕒 Hours (configs, scripts) | ⚡ **Seconds** (one command) |
-
-### Key Capabilities
-1.  **Intelligent Orchestration**: Runs scanners in parallel, handles timeouts, and normalizes results.
-2.  **LLM Integration (New!)**: Explain vulnerabilities and suggest fixes using AI (NVIDIA, OpenAI, Anthropic).
-3.  **Context Awareness**:
-    *   **KEV**: "Is this CVE actively exploited in the wild?" (Source: CISA)
-    *   **Reachability**: "Do we actually import this vulnerable library?"
-    *   **FP Detection**: "Is this just test code or a mock?"
-4.  **CI/CD Ready**: Outputs SARIF for GitHub Security tab and GitLab Code Quality JSON.
+| **Price** | 💰 Varies | ✅ **$0** (OSS, MIT License) |
 
 ---
 
 ## 🤖 CI/CD Integration
 
-Copy-paste these into your pipeline.
-
 ### GitHub Actions
+
 ```yaml
 name: Security Scan
+
 on: [push, pull_request]
+
 jobs:
   security:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+      
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.11'
+      
       - name: Install Security Assistant
         run: pip install security-assistant
+      
       - name: Install Scanners
         run: |
           pip install bandit semgrep
           # Install Trivy (see docs/installation.md)
+      
       - name: Run Scan
-        run: security-assistant scan . --preset ci --format sarif
+        run: security-assistant scan . --format sarif
+      
       - name: Upload SARIF
         uses: github/codeql-action/upload-sarif@v2
         with:
           sarif_file: security-reports/report.sarif
-        # Results appear in GitHub Security tab
 ```
 
 ### GitLab CI
+
 ```yaml
 security_scan:
   image: python:3.11
   script:
     - pip install security-assistant
-    - security-assistant scan . --preset ci --format json
+    - security-assistant scan . --format json
   artifacts:
     reports:
       codequality: security-reports/report.json
-      # Results appear in GitLab Code Quality widget
 ```
+
+More examples in [`docs/integrations/`](docs/integrations/).
 
 ---
 
-## 📚 Documentation
+## 📖 Documentation
 
 - [Installation Guide](docs/installation.md)
 - [Configuration Guide](docs/configuration.md)
 - [Scanner Documentation](docs/scanners/)
-- [CI/CD Integration](docs/integrations/)
+- [CI/CD Integration Examples](docs/integrations/)
 - [Product Roadmap](ROADMAP.md)
 
 ---
 
 ## 🤝 Contributing
 
-We love contributions! Here's how you can help:
-
-1.  **Fork** the repository.
-2.  **Create** a feature branch.
-3.  **Submit** a Pull Request.
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
+We love contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
 
 ### Looking for something to do?
-- 🔍 [Find "Good First Issues"](https://github.com/AMEOBIUS/security-assistant/labels/good%20first%20issue)
-- 💡 [Request a Feature](https://github.com/AMEOBIUS/security-assistant/issues/new?template=feature_request.md)
+
+- [Good First Issues](https://github.com/AMEOBIUS/security-assistant/labels/good%20first%20issue)
+- [Feature Requests](https://github.com/AMEOBIUS/security-assistant/issues?q=is%3Aissue+is%3Aopen+label%3Aenhancement)
 
 ---
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+MIT License — see [LICENSE](LICENSE) for details.
+
+**Disclaimer:** This tool is for defensive security purposes only. Use responsibly.
 
 ---
 
-**Disclaimer**: This tool is for defensive security purposes only. Use responsibly.
+## 🌟 Star History
+
+If you find this useful, give us a star! ⭐
+
+[![Star History Chart](https://api.star-history.com/svg?repos=AMEOBIUS/security-assistant&type=Date)](https://star-history.com/#AMEOBIUS/security-assistant&Date)
+
+---
+
+## 📬 Contact
+
+- **Issues:** [GitHub Issues](https://github.com/AMEOBIUS/security-assistant/issues)
+- **Discussions:** [GitHub Discussions](https://github.com/AMEOBIUS/security-assistant/discussions)
+- **Website:** [workstation-five.vercel.app](https://workstation-five.vercel.app)
 
