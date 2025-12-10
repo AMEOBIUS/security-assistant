@@ -367,6 +367,10 @@ class SecurityAssistantConfig(BaseModel):
             data.setdefault("trivy", {})["enabled"] = (
                 os.getenv("SA_TRIVY_ENABLED", "").lower() == "true"
             )
+        if os.getenv("SA_NUCLEI_ENABLED"):
+            data.setdefault("nuclei", {})["enabled"] = (
+                os.getenv("SA_NUCLEI_ENABLED", "").lower() == "true"
+            )
 
         # Orchestrator
         if os.getenv("SA_DEDUP_STRATEGY"):

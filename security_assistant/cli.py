@@ -45,6 +45,7 @@ from security_assistant.orchestrator import (
 from security_assistant.scanners.bandit_scanner import BanditScanner
 from security_assistant.scanners.semgrep_scanner import SemgrepScanner
 from security_assistant.scanners.trivy_scanner import TrivyScanner
+from security_assistant.scanners.nuclei_scanner import NucleiScanner
 from security_assistant.services.llm_service import LLMService
 
 __version__ = "1.0.0"
@@ -138,10 +139,11 @@ def cmd_scan(args: argparse.Namespace) -> int:
             config.report.output_dir = args.output_dir
 
         # Scanner enablement from CLI
-        if args.bandit_only or args.semgrep_only or args.trivy_only:
+        if args.bandit_only or args.semgrep_only or args.trivy_only or args.nuclei_only:
             config.bandit.enabled = args.bandit_only or False
             config.semgrep.enabled = args.semgrep_only or False
             config.trivy.enabled = args.trivy_only or False
+            config.nuclei.enabled = args.nuclei_only or False
         else:
             if args.no_bandit:
                 config.bandit.enabled = False
@@ -149,6 +151,8 @@ def cmd_scan(args: argparse.Namespace) -> int:
                 config.semgrep.enabled = False
             if args.no_trivy:
                 config.trivy.enabled = False
+            if args.no_nuclei:
+                config.nuclei.enabled = False
 
         # Deduplication strategy
         if args.dedup:
@@ -232,6 +236,11 @@ def cmd_scan(args: argparse.Namespace) -> int:
             logger.info("✓ Enabling Trivy scanner")
             orchestrator.enable_scanner(ScannerType.TRIVY, TrivyScanner())
             enabled_scanners.append("Trivy")
+
+        if config.nuclei.enabled:
+            logger.info("✓ Enabling Nuclei scanner")
+            orchestrator.enable_scanner(ScannerType.NUCLEI, NucleiScanner())
+            enabled_scanners.append("Nuclei")
 
         if not enabled_scanners:
             logger.error("❌ No scanners enabled")
@@ -869,6 +878,9 @@ Environment Variables:
         "--trivy-only", action="store_true", help="Run Trivy scanner only"
     )
     scan_parser.add_argument(
+        "--nuclei-only", action="store_true", help="Run Nuclei scanner only"
+    )
+    scan_parser.add_argument(
         "--no-bandit", action="store_true", help="Disable Bandit scanner"
     )
     scan_parser.add_argument(
@@ -876,6 +888,9 @@ Environment Variables:
     )
     scan_parser.add_argument(
         "--no-trivy", action="store_true", help="Disable Trivy scanner"
+    )
+    scan_parser.add_argument(
+        "--no-nuclei", action="store_true", help="Disable Nuclei scanner"
     )
     scan_parser.add_argument(
         "--fail-on-critical",

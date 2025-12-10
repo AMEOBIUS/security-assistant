@@ -34,8 +34,9 @@ security:scan:
   before_script:
     - pip install -r requirements.txt
     - pip install bandit semgrep
+    - go install -v github.com/projectdiscovery/nuclei/v2/cmd/nuclei@latest
   script:
-    - python examples/orchestrator_example.py --target . --all-scanners
+    - python examples/orchestrator_example.py --target . --all-scanners --nuclei-enabled
     - python examples/generate_reports_example.py --format sarif
   artifacts:
     reports:
@@ -50,6 +51,7 @@ variables:
   ENABLE_BANDIT: "true"
   ENABLE_SEMGREP: "true"
   ENABLE_TRIVY: "true"
+  ENABLE_NUCLEI: "true"
   DEDUP_STRATEGY: "both"
   FAIL_ON_CRITICAL: "true"
   FAIL_ON_HIGH: "true"
@@ -106,12 +108,13 @@ jobs:
         run: |
           pip install -r requirements.txt
           pip install bandit semgrep
+          go install -v github.com/projectdiscovery/nuclei/v2/cmd/nuclei@latest
       
       - name: Run security scan
         run: |
           python examples/orchestrator_example.py \
             --target . \
-            --scanners bandit,semgrep \
+            --scanners bandit,semgrep,nuclei \
             --min-severity MEDIUM
       
       - name: Generate SARIF report
@@ -148,6 +151,7 @@ pipeline {
         ENABLE_BANDIT = 'true'
         ENABLE_SEMGREP = 'true'
         ENABLE_TRIVY = 'true'
+        ENABLE_NUCLEI = 'true'
     }
     
     stages {
@@ -155,6 +159,7 @@ pipeline {
             steps {
                 sh 'pip install -r requirements.txt'
                 sh 'pip install bandit semgrep'
+                sh 'go install -v github.com/projectdiscovery/nuclei/v2/cmd/nuclei@latest'
             }
         }
         
@@ -216,6 +221,7 @@ See [examples/cicd_integration.py](../../examples/cicd_integration.py) - `exampl
 from security_assistant.orchestrator import ScanOrchestrator
 from security_assistant.scanners.bandit_scanner import BanditScanner
 from security_assistant.scanners.semgrep_scanner import SemgrepScanner
+from security_assistant.scanners.nuclei_scanner import NucleiScanner
 import sys
 
 # Create orchestrator
@@ -227,6 +233,7 @@ orchestrator = ScanOrchestrator(
 # Enable scanners
 orchestrator.enable_scanner('bandit', BanditScanner())
 orchestrator.enable_scanner('semgrep', SemgrepScanner())
+orchestrator.enable_scanner('nuclei', NucleiScanner())
 
 # Run scan
 result = orchestrator.scan_directory('.')

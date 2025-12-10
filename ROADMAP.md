@@ -20,9 +20,10 @@ Our goal is to bring enterprise-grade security orchestration to every developer'
 ## 🚧 Short-term Goals (v1.4 - v1.5)
 
 ### Expanded Scanner Support
-- [ ] **OWASP ZAP**: Integration for DAST web scanning.
-- [ ] **Gitleaks**: Dedicated secret scanning integration.
-- [ ] **Checkov**: IaC (Infrastructure as Code) security scanning.
+- [x] **OWASP ZAP**: Integration for DAST web scanning.
+- [x] **Gitleaks**: Dedicated secret scanning integration.
+- [x] **Checkov**: IaC (Infrastructure as Code) security scanning.
+- [x] **Nuclei**: Web vulnerability discovery and exploitation testing.
 
 ### Developer Experience
 - [ ] **VS Code Extension**: View findings directly in the editor.

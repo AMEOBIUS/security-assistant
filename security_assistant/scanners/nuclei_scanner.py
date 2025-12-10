@@ -79,19 +79,37 @@ class NucleiScanner(BaseScanner[NucleiFinding, NucleiScanResult]):
         """Build Nuclei command."""
         target = targets[0] if targets else ""
         
-        # If target is a file, use -l (list of targets), if URL use -target
-        # But we assume targets[0] is the target string
-        
+        # Base command
         cmd = [
             "nuclei",
             "-target", target,
             "-json",
             "-silent",
-            "-nc",
+            "-nc",  # No color
         ]
         
-        if self.config and self.config.extra_args:
-            cmd.extend(self.config.extra_args)
+        # Add configuration options if available
+        if self.config:
+            # Rate limit
+            if hasattr(self.config, 'rate_limit') and self.config.rate_limit:
+                cmd.extend(["-rate-limit", str(self.config.rate_limit)])
+            
+            # Severity
+            if hasattr(self.config, 'severity') and self.config.severity:
+                # Handle list or string
+                severities = self.config.severity
+                if isinstance(severities, list):
+                    severities = ",".join(severities)
+                cmd.extend(["-severity", severities])
+
+            # Templates
+            if hasattr(self.config, 'templates') and self.config.templates:
+                for template in self.config.templates:
+                    cmd.extend(["-t", template])
+
+            # Extra args
+            if hasattr(self.config, 'extra_args') and self.config.extra_args:
+                cmd.extend(self.config.extra_args)
             
         return cmd
 
