@@ -62,6 +62,7 @@ class BaseReporter(ABC):
         include_code_snippets: bool = True,
         include_remediation: bool = True,
         max_findings: Optional[int] = None,
+        llm_service=None,
     ):
         """
         Initialize reporter.
@@ -70,10 +71,12 @@ class BaseReporter(ABC):
             include_code_snippets: Include code snippets in report
             include_remediation: Include remediation advice
             max_findings: Maximum findings to include (None = all)
+            llm_service: LLM service for AI features (optional)
         """
         self.include_code_snippets = include_code_snippets
         self.include_remediation = include_remediation
         self.max_findings = max_findings
+        self.llm_service = llm_service
 
     @property
     @abstractmethod

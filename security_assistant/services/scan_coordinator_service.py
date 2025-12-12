@@ -21,6 +21,7 @@ class ScannerType(str, Enum):
     BANDIT = "bandit"
     SEMGREP = "semgrep"
     TRIVY = "trivy"
+    NUCLEI = "nuclei"
 
 
 class ScanCoordinatorService:

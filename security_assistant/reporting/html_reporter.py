@@ -30,10 +30,12 @@ class HTMLReporter(BaseReporter):
         max_findings: Optional[int] = None,
         include_charts: bool = True,
         template_dir: Optional[str] = None,
+        llm_service=None,
     ):
         super().__init__(include_code_snippets, include_remediation, max_findings)
         self.include_charts = include_charts
         self.template_dir = Path(template_dir) if template_dir else None
+        self._llm_service = llm_service
 
         # Initialize Jinja2 if available
         self.jinja_env = None
@@ -67,6 +69,33 @@ class HTMLReporter(BaseReporter):
         """
         context = self._prepare_context(result, kwargs.get("title"))
 
+        # Generate Executive Summary if LLM is available
+        executive_summary = ""
+        if self._llm_service:
+            import asyncio
+            try:
+                # Prepare stats for LLM
+                stats = {
+                    "total_findings": result.total_findings,
+                    "critical_count": result.critical_count,
+                    "high_count": result.high_count,
+                    "medium_count": result.medium_count,
+                    "low_count": result.low_count
+                }
+                # Get top findings (already deduplicated in result)
+                top_findings = sorted(
+                    result.deduplicated_findings, 
+                    key=lambda f: f.priority_score, 
+                    reverse=True
+                )[:5]
+                
+                logger.info("Generating AI Executive Summary...")
+                executive_summary = asyncio.run(
+                    self._llm_service.generate_executive_summary(stats, top_findings)
+                )
+            except Exception as e:
+                logger.warning(f"Failed to generate executive summary: {e}")
+
         # Add HTML-specific context
         context.update(
             {
@@ -75,6 +104,7 @@ class HTMLReporter(BaseReporter):
                 if self.include_charts
                 else "",
                 "css_content": self._get_css_content(),
+                "executive_summary": executive_summary,
             }
         )
         context.update(kwargs)
@@ -152,6 +182,8 @@ new Chart(scannerCtx, {{
         .summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 40px; }
         .stat-card { background: #f8f9fa; padding: 20px; border-radius: 8px; border-left: 4px solid #667eea; }
         .stat-card .value { font-size: 2em; font-weight: bold; }
+        .executive-summary { background: #fff; padding: 30px; border-radius: 8px; margin-bottom: 40px; border-left: 4px solid #28a745; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .executive-summary h2 { margin-top: 0; color: #28a745; display: flex; align-items: center; gap: 10px; }
         table { width: 100%; border-collapse: collapse; margin-top: 20px; }
         th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
         .severity-badge { padding: 4px 12px; border-radius: 12px; font-weight: 600; text-transform: uppercase; font-size: 0.85em; }
@@ -189,6 +221,14 @@ new Chart(scannerCtx, {{
             </div>
             """
         ]
+
+        if context.get("executive_summary"):
+            html.append(f"""
+            <div class="executive-summary">
+                <h2>🤖 AI Executive Summary</h2>
+                {context["executive_summary"]}
+            </div>
+            """)
 
         if context["include_charts"]:
             html.append(f"""

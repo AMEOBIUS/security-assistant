@@ -43,6 +43,7 @@ class EnrichmentService:
         enable_fp_detection: bool = True,
         enable_reachability: bool = True,
         project_root: Optional[str] = None,
+        llm_service=None,
     ):
         """
         Initialize enrichment service.
@@ -52,10 +53,12 @@ class EnrichmentService:
             enable_fp_detection: Enable false positive detection
             enable_reachability: Enable reachability analysis
             project_root: Project root for reachability analysis
+            llm_service: LLM service for AI-based enrichment
         """
         self._kev_client = None
         self._fp_detector = None
         self._reachability_analyzer = None
+        self._llm_service = llm_service
         self.project_root = project_root or str(Path.cwd())
 
         if enable_kev:
@@ -139,33 +142,51 @@ class EnrichmentService:
         Args:
             findings: List of UnifiedFinding objects (modified in-place)
         """
-        if not self._fp_detector:
-            return
+        # 1. Use Heuristic FP Detector
+        if self._fp_detector:
+            findings_dict_list = []
+            for f in findings:
+                findings_dict_list.append(
+                    {
+                        "file_path": f.file_path,
+                        "code": f.code_snippet,
+                        "vulnerability_type": f.title,
+                    }
+                )
 
-        findings_dict_list = []
-        for f in findings:
-            findings_dict_list.append(
-                {
-                    "file_path": f.file_path,
-                    "code": f.code_snippet,
-                    "vulnerability_type": f.title,
-                }
-            )
+            analyses = self._fp_detector.analyze_batch(findings_dict_list)
 
-        analyses = self._fp_detector.analyze_batch(findings_dict_list)
+            for idx, analysis in analyses.items():
+                if idx < len(findings):
+                    finding = findings[idx]
+                    finding.is_false_positive = analysis.is_likely_false_positive
+                    finding.fp_confidence = analysis.confidence
+                    finding.fp_reasons = analysis.reasons
 
-        for idx, analysis in analyses.items():
-            if idx < len(findings):
-                finding = findings[idx]
-                finding.is_false_positive = analysis.is_likely_false_positive
-                finding.fp_confidence = analysis.confidence
-                finding.fp_reasons = analysis.reasons
+                    if finding.is_false_positive:
+                        logger.info(
+                            f"Probable False Positive (Heuristic): {finding.finding_id} "
+                            f"(Confidence: {finding.fp_confidence:.2f})"
+                        )
 
-                if finding.is_false_positive:
-                    logger.info(
-                        f"Probable False Positive: {finding.finding_id} "
-                        f"(Confidence: {finding.fp_confidence:.2f})"
-                    )
+        # 2. Use LLM FP Detector (if enabled and finding is not already marked as FP)
+        if self._llm_service:
+            import asyncio
+            
+            for finding in findings:
+                # Skip if already marked as FP with high confidence
+                if finding.is_false_positive and finding.fp_confidence > 0.8:
+                    continue
+                    
+                try:
+                    is_fp, reason = asyncio.run(self._llm_service.detect_false_positive(finding))
+                    if is_fp:
+                        finding.is_false_positive = True
+                        finding.fp_confidence = 0.9  # High confidence for LLM
+                        finding.fp_reasons.append(f"LLM: {reason}")
+                        logger.info(f"Probable False Positive (LLM): {finding.finding_id} - {reason}")
+                except Exception as e:
+                    logger.warning(f"LLM FP detection failed for {finding.finding_id}: {e}")
 
     def analyze_reachability(
         self,

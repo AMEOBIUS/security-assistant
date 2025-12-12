@@ -79,6 +79,7 @@ class PriorityCalculator:
         kev_client=None,
         ml_scorer=None,
         enable_ml: bool = False,
+        llm_service=None,
     ):
         """
         Initialize priority calculator.
@@ -87,13 +88,15 @@ class PriorityCalculator:
             kev_client: KEV client for active exploit detection
             ml_scorer: ML scorer for ML-based priority calculation
             enable_ml: Enable ML-based scoring
+            llm_service: LLM service for AI-based scoring
         """
         self._kev_client = kev_client
         self._ml_scorer = ml_scorer
+        self._llm_service = llm_service
         self.enable_ml = enable_ml and ml_scorer is not None
 
         logger.debug(
-            f"PriorityCalculator initialized: ml={self.enable_ml}, kev={kev_client is not None}"
+            f"PriorityCalculator initialized: ml={self.enable_ml}, kev={kev_client is not None}, llm={llm_service is not None}"
         )
 
     def calculate(self, finding) -> float:
@@ -106,6 +109,14 @@ class PriorityCalculator:
         Returns:
             Priority score (0-100)
         """
+        # Try LLM scoring first if available
+        if self._llm_service:
+            import asyncio
+            try:
+                return asyncio.run(self._llm_service.calculate_priority(finding))
+            except Exception as e:
+                logger.warning(f"LLM scoring failed: {e}. Using rule-based.")
+
         # Try ML scoring first
         if self.enable_ml and self._ml_scorer:
             try:

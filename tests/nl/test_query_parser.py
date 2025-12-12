@@ -1,10 +1,13 @@
 """Tests for Query Parser."""
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock
+
+import pytest
+
+from security_assistant.llm import LLMResponse
 from security_assistant.nl.query_parser import QueryParser, SearchIntent
 from security_assistant.services.llm_service import LLMService
-from security_assistant.llm import LLMResponse
+
 
 @pytest.fixture
 def mock_llm_service():

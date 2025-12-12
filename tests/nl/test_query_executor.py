@@ -1,8 +1,10 @@
 """Tests for Query Executor."""
 
 import pytest
+
 from security_assistant.nl.query_executor import QueryExecutor
-from security_assistant.nl.schema import StructuredQuery, SearchIntent, SearchFilters
+from security_assistant.nl.schema import SearchFilters, SearchIntent, StructuredQuery
+
 
 @pytest.fixture
 def executor():

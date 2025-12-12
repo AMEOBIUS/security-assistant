@@ -1,0 +1,18 @@
+Analyze this vulnerability and rate its real-world exploitability (0-100).
+
+Finding: {{ finding.title }}
+Type: {{ finding.category }}
+Severity: {{ finding.severity }}
+Code:
+```
+{{ finding.code_snippet }}
+```
+File: {{ finding.file_path }}
+
+Consider:
+1. Actual exploitability in a modern environment.
+2. Attack surface (is it reachable?).
+3. Potential business impact.
+4. Mitigating factors (framework protections).
+
+Return ONLY a number between 0 and 100.

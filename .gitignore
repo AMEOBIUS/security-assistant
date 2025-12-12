@@ -102,6 +102,9 @@ security-reports/
 !docs/**/*.html
 !docs/**/*.pdf
 !web_dashboard/**/*.html
+!frontend/**/*.html
+!frontend/**/*.js
+!frontend/**/*.css
 
 # ============================================
 # Database Files
@@ -124,6 +127,8 @@ exported-assets/
 *_old.*
 
 # ============================================
+
+# ============================================
 # MCP Configuration (contains secrets)
 # ============================================
 mcp.json.READY
@@ -141,3 +146,16 @@ scripts/perplexity_*.sh
 scripts/test_perplexity*.py
 scripts/add_missing_imports.py
 scripts/remove_unused_vars.py
+  
+# Temporary test directories  
+test-*/  
+patch_*.py  
+error.log
+
+# Scan results
+*_results.json
+sqlmap_results_*.json
+code_analysis_results.json
+
+# Session reports
+SESSION_*.md 

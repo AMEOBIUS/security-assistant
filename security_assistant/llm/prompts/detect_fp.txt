@@ -1,0 +1,21 @@
+Analyze if this security finding is a False Positive.
+
+Finding: {{ finding.title }}
+Code:
+```
+{{ finding.code_snippet }}
+```
+File: {{ finding.file_path }}
+
+Consider:
+1. Input validation or sanitization present in code.
+2. Framework built-in protections.
+3. Configuration context (test files, internal tools).
+4. Logic flow (is the data actually tainted?).
+
+Answer "YES" if it is a false positive, or "NO" if it is a valid finding.
+Then provide a brief one-sentence reason.
+
+Format:
+Answer: YES/NO
+Reason: <reason>

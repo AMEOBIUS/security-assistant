@@ -1,0 +1,134 @@
+{
+  "platforms": {
+    "linux-x64": {
+      "description": "Linux x64 platform",
+      "payloads": {
+        "reverse-shell": {
+          "description": "Reverse shell payload",
+          "parameters": {
+            "lhost": "Local host IP address",
+            "lport": "Local port number"
+          },
+          "example": {
+            "lhost": "192.168.1.100",
+            "lport": 4444
+          }
+        },
+        "bind-shell": {
+          "description": "Bind shell payload",
+          "parameters": {
+            "lport": "Local port number"
+          },
+          "example": {
+            "lport": 8080
+          }
+        },
+        "exec": {
+          "description": "Execute command payload",
+          "parameters": {
+            "cmd": "Command to execute"
+          },
+          "example": {
+            "cmd": "echo 'Hello World'"
+          }
+        },
+        "download-exec": {
+          "description": "Download and execute payload",
+          "parameters": {
+            "url": "URL to download",
+            "output_path": "Local output path"
+          },
+          "example": {
+            "url": "http://example.com/payload",
+            "output_path": "/tmp/payload"
+          }
+        }
+      }
+    },
+    "windows-x64": {
+      "description": "Windows x64 platform",
+      "payloads": {
+        "reverse-shell": {
+          "description": "Reverse shell payload",
+          "parameters": {
+            "lhost": "Local host IP address",
+            "lport": "Local port number"
+          },
+          "example": {
+            "lhost": "192.168.1.100",
+            "lport": 4444
+          }
+        },
+        "exec": {
+          "description": "Execute command payload",
+          "parameters": {
+            "cmd": "Command to execute"
+          },
+          "example": {
+            "cmd": "calc.exe"
+          }
+        },
+        "bind-shell": {
+          "description": "Bind shell payload",
+          "parameters": {
+            "lport": "Local port number"
+          },
+          "example": {
+            "lport": 8080
+          }
+        }
+      }
+    },
+    "macos-x64": {
+      "description": "macOS x64 platform",
+      "payloads": {
+        "reverse-shell": {
+          "description": "Reverse shell payload",
+          "parameters": {
+            "lhost": "Local host IP address",
+            "lport": "Local port number"
+          },
+          "example": {
+            "lhost": "192.168.1.100",
+            "lport": 4444
+          }
+        },
+        "exec": {
+          "description": "Execute command payload",
+          "parameters": {
+            "cmd": "Command to execute"
+          },
+          "example": {
+            "cmd": "say hello"
+          }
+        },
+        "bind-shell": {
+          "description": "Bind shell payload",
+          "parameters": {
+            "lport": "Local port number"
+          },
+          "example": {
+            "lport": 8080
+          }
+        }
+      }
+    }
+  },
+  "encoders": {
+    "xor": {
+      "description": "XOR encoder",
+      "parameters": {
+        "key": "XOR key (single byte or multi-byte)"
+      },
+      "example": {
+        "key": 0xAA
+      }
+    },
+    "base64": {
+      "description": "Base64 encoder",
+      "parameters": {},
+      "example": {}
+    }
+  },
+  "legal_disclaimer": "This software is for educational and research purposes only. Use only on systems you own or have explicit permission to test. Unauthorized use is illegal and unethical."
+}

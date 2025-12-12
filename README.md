@@ -4,7 +4,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
-[![GitHub release](https://img.shields.io/github/v/tag/AMEOBIUS/security-assistant?label=version)](https://github.com/AMEOBIUS/security-assistant/releases)
+[![Version](https://img.shields.io/badge/version-v2.0.0-blue)](https://github.com/AMEOBIUS/security-assistant/releases)
 [![Stars](https://img.shields.io/github/stars/AMEOBIUS/security-assistant?style=social)](https://github.com/AMEOBIUS/security-assistant)
 
 **Security Assistant** orchestrates multiple security scanners (Bandit, Semgrep, Trivy, Nuclei), deduplicates findings, and prioritizes them using **Context Intelligence** (KEV, Reachability, False Positive Detection).
@@ -60,26 +60,34 @@ Open `security-reports/report.html` in your browser to see the interactive dashb
 
 ## 🚀 Key Features
 
-### ✅ Available Now (v1.3.0)
+### ✅ Available Now (v2.0.0)
 
 | Feature | Description |
 |---------|-------------|
 | **Multi-Scanner Orchestration** | Bandit, Semgrep, Trivy, Nuclei (DAST) |
+| **Offensive Security Suite** | **Nmap**, **SQLMap**, **OWASP ZAP** integration |
+| **Shellcode Generator** | Custom payload generation for security research |
+| **WAF Bypass Engine** | Evasion techniques for penetration testing |
+| **Bug Bounty Automation** | HackerOne and Bugcrowd API integration |
 | **Intelligent Deduplication** | Merge identical findings across scanners |
 | **Context Intelligence** | KEV (CISA), Reachability Analysis, FP Detection |
 | **LLM Integration** | Explain vulns & suggest fixes (OpenAI, Anthropic, NVIDIA NIM) |
-| **Auto-PoC Generation** | Template-based exploits for SQLi, XSS (experimental) |
+| **Auto-Fix Pull Requests** | LLM-powered fix generation with GitLab MR automation |
+| **Batch Remediation** | Fix multiple findings in one MR with smart grouping |
+| **Test Generation** | Automatic pytest test generation for each fix |
+| **Auto-PoC Generation** | Template-based exploits for SQLi, XSS |
 | **CI/CD Ready** | SARIF for GitHub, JSON for GitLab Code Quality |
 | **Output Formats** | JSON, HTML, Markdown, SARIF |
 
-### 🚧 Roadmap
+### 🚧 Roadmap (v2.1+)
 
 | Feature | Status |
 |---------|--------|
-| Web Dashboard (React) | 🔨 In Progress |
-| GitHub Actions Plugin | 📋 Examples available |
-| GitLab CI Plugin | 📋 Examples available |
-| SIEM Integration | 🗓️ Planned Q2 2025 |
+| Cloud Scanning (AWS/Azure) | 📋 Planned (v2.1) |
+| SaaS Dashboard (Multi-tenant) | 📋 Planned (v2.1) |
+| Autonomous Remediation Agents | 🗓️ Planned Q2 2026 |
+| Vulnerable Lab Environment | 🚧 In Rework |
+| SIEM Integration | 🗓️ Planned Q2 2026 |
 
 ---
 

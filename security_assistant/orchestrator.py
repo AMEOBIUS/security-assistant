@@ -281,6 +281,7 @@ class ScanOrchestrator:
         enable_kev: bool = True,  # Enable KEV integration (default: True)
         enable_fp_detection: bool = True,  # Enable FP detection (default: True)
         enable_reachability: bool = True,  # Enable reachability analysis (default: True)
+        llm_service=None,  # LLM Service for AI features
     ):
         """
         Initialize scan orchestrator.
@@ -296,6 +297,7 @@ class ScanOrchestrator:
             enable_kev: Enable KEV enrichment
             enable_fp_detection: Enable false positive detection
             enable_reachability: Enable reachability analysis
+            llm_service: LLM Service instance
         """
         self.max_workers = max_workers
         self.enable_deduplication = enable_deduplication
@@ -305,6 +307,7 @@ class ScanOrchestrator:
         self.enable_kev = enable_kev
         self.enable_fp_detection = enable_fp_detection
         self.enable_reachability = enable_reachability
+        self._llm_service = llm_service
 
         # Initialize refactored services
 
@@ -321,6 +324,7 @@ class ScanOrchestrator:
             enable_fp_detection=enable_fp_detection,
             enable_reachability=enable_reachability,
             project_root=str(Path.cwd()),
+            llm_service=llm_service,
         )
 
         # 3. Scan Coordinator Service
@@ -341,6 +345,7 @@ class ScanOrchestrator:
             kev_client=self._enrichment_service.kev_client,
             ml_scorer=self._ml_scoring_service.ml_scorer,
             enable_ml=enable_ml_scoring,
+            llm_service=llm_service,
         )
 
         # 6. Finding Converter

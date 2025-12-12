@@ -164,10 +164,21 @@ class BanditScanner(BaseScanner[BanditFinding, ScanResult]):
 
     def _build_command(self, targets: List[str], **kwargs) -> List[str]:
         """Build Bandit command with arguments."""
+        import tempfile
+        
+        # Create temp file for output
+        temp_file = tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False)
+        temp_file.close()
+        
+        # Store temp file path for later cleanup
+        self._temp_output_file = temp_file.name
+        
         cmd = [
             "bandit",
             "-f",
             "json",
+            "-o",
+            self._temp_output_file,  # Output to file instead of stdout
             "-ll",
         ]
 
@@ -185,6 +196,23 @@ class BanditScanner(BaseScanner[BanditFinding, ScanResult]):
 
     def _parse_output(self, raw: str) -> ScanResult:
         """Parse Bandit JSON output."""
+        # Use stdout if it contains data (for backward compatibility)
+        if raw and raw.strip():
+            return self._parse_bandit_output(raw)
+        
+        # If temp file was used, read from it
+        if hasattr(self, '_temp_output_file'):
+            import os
+            try:
+                if os.path.exists(self._temp_output_file):
+                    with open(self._temp_output_file) as f:
+                        raw = f.read()
+            finally:
+                # Cleanup temp file
+                if os.path.exists(self._temp_output_file):
+                    os.remove(self._temp_output_file)
+                delattr(self, '_temp_output_file')
+        
         return self._parse_bandit_output(raw)
 
     def _parse_bandit_output(self, json_output: str) -> ScanResult:
@@ -197,6 +225,11 @@ class BanditScanner(BaseScanner[BanditFinding, ScanResult]):
         Returns:
             ScanResult with parsed findings
         """
+        # Handle empty output
+        if not json_output or json_output.strip() == "":
+            logger.warning("Bandit returned empty output")
+            return ScanResult(findings=[], scan_time=datetime.now())
+        
         try:
             data = json.loads(json_output)
         except json.JSONDecodeError as e:

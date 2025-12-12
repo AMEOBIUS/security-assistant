@@ -1,14 +1,12 @@
 """Tests for Nuclei Scanner."""
 
 import json
-import subprocess
 from unittest.mock import MagicMock, patch
 
 import pytest
 
 from security_assistant.scanners.base_scanner import ScannerError
 from security_assistant.scanners.nuclei_scanner import (
-    NucleiFinding,
     NucleiScanner,
     NucleiScanResult,
 )

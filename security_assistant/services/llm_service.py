@@ -6,7 +6,7 @@ Orchestrates LLM operations, manages templates, and handles provider abstraction
 
 import logging
 from pathlib import Path
-from typing import TYPE_CHECKING, Dict, Optional
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 from jinja2 import Template
 
@@ -165,6 +165,41 @@ class LLMService:
             logger.error(f"Error suggesting fix for {finding.finding_id}: {e}")
             raise
 
+    async def generate_executive_summary(self, scan_stats: Dict[str, Any], top_findings: List["UnifiedFinding"]) -> str:
+        """
+        Generate executive summary.
+        
+        Args:
+            scan_stats: Dictionary with scan statistics
+            top_findings: List of top findings
+            
+        Returns:
+            HTML summary string
+        """
+        if not self.client:
+            return ""
+
+        template = self.templates.get("executive_summary")
+        if not template:
+            logger.warning("Template 'executive_summary' not found")
+            return ""
+
+        prompt = template.render(
+            total_findings=scan_stats.get("total_findings", 0),
+            critical_count=scan_stats.get("critical_count", 0),
+            high_count=scan_stats.get("high_count", 0),
+            medium_count=scan_stats.get("medium_count", 0),
+            low_count=scan_stats.get("low_count", 0),
+            top_findings=top_findings
+        )
+        
+        try:
+            response = await self.client.complete(prompt, temperature=0.5)
+            return response.content
+        except Exception as e:
+            logger.error(f"Error generating executive summary: {e}")
+            return ""
+
     async def analyze_code(self, code: str, file_path: str) -> str:
         """
         Analyze code snippet for vulnerabilities.
@@ -198,3 +233,77 @@ class LLMService:
         except Exception as e:
             logger.error(f"Error analyzing code in {file_path}: {e}")
             raise
+
+    async def calculate_priority(self, finding: "UnifiedFinding") -> float:
+        """
+        Calculate priority score using LLM.
+        
+        Args:
+            finding: The security finding
+            
+        Returns:
+            Score between 0.0 and 100.0
+        """
+        if not self.client:
+            return 0.0
+
+        template = self.templates.get("calculate_priority")
+        if not template:
+            logger.warning("Template 'calculate_priority' not found")
+            return 0.0
+
+        prompt = template.render(finding=finding)
+        
+        try:
+            response = await self.client.complete(prompt, temperature=0.1)
+            content = response.content.strip()
+            
+            # Extract number
+            import re
+            match = re.search(r"\d+", content)
+            if match:
+                score = float(match.group(0))
+                return min(100.0, max(0.0, score))
+            return 0.0
+        except Exception as e:
+            logger.error(f"Error calculating priority for {finding.finding_id}: {e}")
+            return 0.0
+
+    async def detect_false_positive(self, finding: "UnifiedFinding") -> tuple[bool, str]:
+        """
+        Detect if finding is a false positive using LLM.
+        
+        Args:
+            finding: The security finding
+            
+        Returns:
+            Tuple (is_fp: bool, reason: str)
+        """
+        if not self.client:
+            return False, ""
+
+        template = self.templates.get("detect_fp")
+        if not template:
+            logger.warning("Template 'detect_fp' not found")
+            return False, ""
+
+        prompt = template.render(finding=finding)
+        
+        try:
+            response = await self.client.complete(prompt, temperature=0.1)
+            content = response.content.strip()
+            
+            # Parse YES/NO
+            is_fp = "YES" in content.upper().splitlines()[0]
+            
+            # Extract reason
+            reason = "LLM detection"
+            for line in content.splitlines():
+                if line.lower().startswith("reason:"):
+                    reason = line.split(":", 1)[1].strip()
+                    break
+            
+            return is_fp, reason
+        except Exception as e:
+            logger.error(f"Error detecting FP for {finding.finding_id}: {e}")
+            return False, ""

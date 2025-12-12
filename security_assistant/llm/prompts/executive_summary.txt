@@ -1,0 +1,20 @@
+Create an executive summary for this security scan.
+
+Total Findings: {{ total_findings }}
+Critical: {{ critical_count }}
+High: {{ high_count }}
+Medium: {{ medium_count }}
+Low: {{ low_count }}
+
+Top Issues:
+{% for finding in top_findings %}
+- {{ finding.title }} ({{ finding.severity }}) in {{ finding.file_path }}
+{% endfor %}
+
+Generate:
+1. Business impact summary (non-technical).
+2. Risk assessment (High/Medium/Low) with reasoning.
+3. Recommended actions (Top 3 strategic moves).
+4. Estimated timeline for remediation (Rough estimate).
+
+Format: HTML (use <h3>, <p>, <ul>, <li>). Do not use Markdown. Keep it concise.

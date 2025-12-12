@@ -160,7 +160,7 @@ class SemgrepScanner(BaseScanner[SemgrepFinding, SemgrepScanResult]):
     def __init__(
         self,
         min_severity: str = "INFO",
-        config: str = "auto",
+        config: str = "p/security-audit",
         exclude_dirs: Optional[List[str]] = None,
         custom_rules: Optional[List[str]] = None,
         scanner_config: Optional[ScannerConfig] = None,

@@ -4,7 +4,7 @@ Tests scanner functionality with mocked Bandit output.
 """
 
 import json
-from unittest.mock import Mock, patch
+from unittest.mock import Mock, mock_open, patch
 
 import pytest
 
@@ -206,17 +206,22 @@ class TestBanditScanner:
         # Just verify scanner is initialized correctly
         assert scanner.name == "bandit"
     
+    @patch('builtins.open', new_callable=mock_open, read_data=json.dumps(SAMPLE_BANDIT_OUTPUT))
+    @patch('os.path.exists')
     @patch('subprocess.run')
     @patch('security_assistant.scanners.base_scanner.shutil.which')
     @patch('pathlib.Path.is_file')
     @patch('pathlib.Path.exists')
-    def test_scan_file_success(self, mock_exists, mock_is_file, mock_which, mock_run):
+    def test_scan_file_success(self, mock_path_exists, mock_is_file, mock_which, mock_run, mock_os_exists, mock_file):
         """Test successful file scan."""
         # Mock installation check
         mock_which.return_value = "/usr/bin/bandit"
         # Mock file exists and is file
-        mock_exists.return_value = True
+        mock_path_exists.return_value = True
         mock_is_file.return_value = True
+        
+        # Mock os.path.exists for temp file check
+        mock_os_exists.return_value = True
         
         scanner = BanditScanner()
         
@@ -234,19 +239,24 @@ class TestBanditScanner:
         assert result.high_severity_count == 1
         assert result.medium_severity_count == 1
     
+    @patch('builtins.open', new_callable=mock_open, read_data=json.dumps(SAMPLE_BANDIT_OUTPUT))
+    @patch('os.path.exists')
     @patch('subprocess.run')
     @patch('security_assistant.scanners.base_scanner.shutil.which')
     @patch('pathlib.Path.is_dir')
     @patch('pathlib.Path.exists')
-    def test_scan_directory_success(self, mock_exists, mock_is_dir, mock_which, mock_run):
+    def test_scan_directory_success(self, mock_path_exists, mock_is_dir, mock_which, mock_run, mock_os_exists, mock_file):
         """Test successful directory scan."""
         # Mock installation and path checks
         mock_which.return_value = "/usr/bin/bandit"
-        mock_exists.return_value = True
+        mock_path_exists.return_value = True
         mock_is_dir.return_value = True
         
+        # Mock os.path.exists for temp file
+        mock_os_exists.return_value = True
+        
         mock_run.return_value = Mock(
-            returncode=0,
+            returncode=1,  # Bandit returns 1 when issues found
             stdout=json.dumps(SAMPLE_BANDIT_OUTPUT),
             stderr=""
         )
@@ -256,6 +266,8 @@ class TestBanditScanner:
         
         assert isinstance(result, ScanResult)
         assert len(result.findings) == 3
+        assert result.high_severity_count == 1
+        assert result.medium_severity_count == 1
     
     @patch('subprocess.run')
     def test_parse_bandit_output(self, mock_run):

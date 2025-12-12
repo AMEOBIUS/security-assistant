@@ -1,7 +1,9 @@
 """Tests for Safety Checker."""
 
 import pytest
-from security_assistant.poc.safety_checker import SafetyChecker, PoCSafetyError
+
+from security_assistant.poc.safety_checker import PoCSafetyError, SafetyChecker
+
 
 @pytest.fixture
 def checker():

@@ -6,6 +6,7 @@ Wraps the Nuclei CLI tool for DAST scanning of web applications.
 
 import json
 import logging
+import os
 from dataclasses import dataclass
 from typing import List, Optional
 
@@ -64,7 +65,21 @@ class NucleiScanner(BaseScanner[NucleiFinding, NucleiScanResult]):
 
     @property
     def command(self) -> str:
+        # Check for custom Nuclei path in environment
+        custom_path = os.getenv("SA_NUCLEI_PATH")
+        if custom_path and os.path.exists(custom_path):
+            return custom_path
         return "nuclei"
+
+    def _is_installed(self) -> bool:
+        """Check if Nuclei is available (custom path or PATH)."""
+        import shutil
+        cmd = self.command
+        # If it's a full path, check if file exists
+        if os.path.isabs(cmd):
+            return os.path.exists(cmd)
+        # Otherwise, check PATH
+        return shutil.which(cmd) is not None
 
     def _valid_return_codes(self) -> List[int]:
         """Nuclei returns 0 on success."""

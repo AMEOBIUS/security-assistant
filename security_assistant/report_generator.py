@@ -67,6 +67,7 @@ class ReportGenerator:
         include_charts: bool = True,
         include_code_snippets: bool = True,
         enable_remediation: bool = True,
+        llm_service=None,
     ):
         """
         Initialize report generator.
@@ -76,16 +77,18 @@ class ReportGenerator:
             include_charts: Include charts in HTML reports (default: True)
             include_code_snippets: Include code snippets (default: True)
             enable_remediation: Enable automated remediation advice (default: True)
+            llm_service: LLM service for AI-generated summaries
         """
         self.template_dir = template_dir
         self.include_charts = include_charts
         self.include_code_snippets = include_code_snippets
         self.enable_remediation = enable_remediation
+        self._llm_service = llm_service
 
         logger.info(
             f"Initialized ReportGenerator: charts={include_charts}, "
             f"snippets={include_code_snippets}, templates={self.template_dir}, "
-            f"remediation={self.enable_remediation}"
+            f"remediation={self.enable_remediation}, llm={llm_service is not None}"
         )
 
     def generate_report(
@@ -116,6 +119,7 @@ class ReportGenerator:
             reporter_kwargs = {
                 "include_code_snippets": self.include_code_snippets,
                 "include_remediation": self.enable_remediation,
+                "llm_service": self._llm_service,
             }
 
             # Add HTML-specific args only for HTML reporter

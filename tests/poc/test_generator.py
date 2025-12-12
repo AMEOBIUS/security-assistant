@@ -1,11 +1,11 @@
 """Tests for PoC Generator."""
 
-import pytest
-from pathlib import Path
-from unittest.mock import MagicMock
 
-from security_assistant.poc.generator import PoCGenerator, PoCError
-from security_assistant.orchestrator import UnifiedFinding, ScannerType, FindingSeverity
+import pytest
+
+from security_assistant.orchestrator import FindingSeverity, ScannerType, UnifiedFinding
+from security_assistant.poc.generator import PoCError, PoCGenerator
+
 
 @pytest.fixture
 def generator():

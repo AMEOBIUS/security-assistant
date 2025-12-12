@@ -1,13 +1,14 @@
 """Tests for LLM Service."""
 
-import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
-from pathlib import Path
+from unittest.mock import AsyncMock, MagicMock
 
-from security_assistant.config import SecurityAssistantConfig, LLMConfig, LLMProvider
-from security_assistant.services.llm_service import LLMService
+import pytest
+
+from security_assistant.config import LLMConfig, LLMProvider, SecurityAssistantConfig
 from security_assistant.llm import LLMResponse
-from security_assistant.orchestrator import UnifiedFinding, ScannerType, FindingSeverity
+from security_assistant.orchestrator import FindingSeverity, ScannerType, UnifiedFinding
+from security_assistant.services.llm_service import LLMService
+
 
 @pytest.fixture
 def mock_config():

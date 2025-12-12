@@ -1,11 +1,14 @@
 """Tests for LLM Enhancer."""
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock
+
+import pytest
+
+from security_assistant.llm import LLMResponse
+from security_assistant.orchestrator import FindingSeverity, ScannerType, UnifiedFinding
 from security_assistant.poc.enhancers.llm_enhancer import LLMEnhancer
 from security_assistant.services.llm_service import LLMService
-from security_assistant.orchestrator import UnifiedFinding, ScannerType, FindingSeverity
-from security_assistant.llm import LLMResponse
+
 
 @pytest.fixture
 def mock_llm_service():

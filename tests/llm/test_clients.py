@@ -1,20 +1,19 @@
 """Tests for LLM Clients."""
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
-import httpx
+
 import openai
-import anthropic
+import pytest
 
 from security_assistant.llm import (
-    OpenAIClient,
     AnthropicClient,
-    OllamaClient,
-    NvidiaClient,
+    LLMAuthenticationError,
     LLMResponse,
-    LLMError,
-    LLMAuthenticationError
+    NvidiaClient,
+    OllamaClient,
+    OpenAIClient,
 )
+
 
 @pytest.mark.asyncio
 async def test_openai_client():

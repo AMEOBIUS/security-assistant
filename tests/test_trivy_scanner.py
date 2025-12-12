@@ -379,10 +379,12 @@ class TestTrivyScanner:
         assert scanner.min_severity == TrivySeverity.HIGH
         assert scanner.scan_type == TrivyScanType.IMAGE
     
+    @patch("security_assistant.scanners.trivy_scanner.os.getenv")
     @patch("security_assistant.scanners.trivy_scanner.shutil.which")
-    def test_trivy_not_installed(self, mock_which):
+    def test_trivy_not_installed(self, mock_which, mock_getenv):
         """Test error when Trivy is not installed"""
         mock_which.return_value = None
+        mock_getenv.return_value = None
         
         with pytest.raises(TrivyNotInstalledError):
             TrivyScanner()

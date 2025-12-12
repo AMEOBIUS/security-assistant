@@ -23,6 +23,7 @@ Refactored: Session 47 - Now extends BaseScanner
 
 import json
 import logging
+import os
 import shutil
 import subprocess
 from dataclasses import dataclass, field
@@ -117,7 +118,18 @@ class TrivyScanner:
 
     def _is_trivy_installed(self) -> bool:
         """Check if Trivy is installed and accessible"""
+        # Check for custom Trivy path in environment
+        custom_path = os.getenv("SA_TRIVY_PATH")
+        if custom_path and os.path.exists(custom_path):
+            return True
         return shutil.which("trivy") is not None
+
+    def _get_trivy_command(self) -> str:
+        """Get Trivy command (custom path or 'trivy')"""
+        custom_path = os.getenv("SA_TRIVY_PATH")
+        if custom_path and os.path.exists(custom_path):
+            return custom_path
+        return "trivy"
 
     def scan_image(
         self,
@@ -146,7 +158,7 @@ class TrivyScanner:
         logger.info(f"Scanning container image: {image}")
 
         cmd = [
-            "trivy",
+            self._get_trivy_command(),
             "image",
             "--format",
             "json",
@@ -197,7 +209,7 @@ class TrivyScanner:
         logger.info(f"Scanning filesystem: {path}")
 
         cmd = [
-            "trivy",
+            self._get_trivy_command(),
             "fs",
             "--format",
             "json",
@@ -238,7 +250,7 @@ class TrivyScanner:
         logger.info(f"Scanning repository: {repo_url}")
 
         cmd = [
-            "trivy",
+            self._get_trivy_command(),
             "repo",
             "--format",
             "json",
@@ -308,7 +320,7 @@ class TrivyScanner:
         logger.info(f"Generating SBOM for: {target}")
 
         cmd = [
-            "trivy",
+            self._get_trivy_command(),
             "image" if ":" in target else "fs",
             "--format",
             output_format,
