@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  vulnerable-lab:
+    build: .
+    ports:
+      - "5000:5000"
+    # Environment variables are optional (defaults in app.py)
+    # environment:
+    #   - FLASK_SECRET_KEY=...
+    #   - ADMIN_PASSWORD=...
+    networks:
+      - lab-network
+    restart: unless-stopped
+
+networks:
+  lab-network:
+    driver: bridge
