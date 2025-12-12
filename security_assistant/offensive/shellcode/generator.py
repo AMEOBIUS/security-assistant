@@ -46,8 +46,9 @@ class ShellcodeGenerator:
         self._load_payloads()
         
         logger.warning(
-            f"ShellcodeGenerator initialized for {platform} "
-            f"({'educational mode' if educational else 'normal mode'})"
+            "ShellcodeGenerator initialized for %s (%s)",
+            platform,
+            'educational mode' if educational else 'normal mode'
         )
     
     def _validate_platform(self) -> None:
@@ -102,7 +103,7 @@ class ShellcodeGenerator:
     def _check_authorization(self) -> None:
         """Check if user has accepted ToS."""
         if not self.auth_service.check_tos_accepted():
-            raise Exception(
+            raise PermissionError(
                 "Must accept Terms of Service before generating shellcode. "
                 "This is for educational purposes only."
             )
@@ -113,8 +114,8 @@ class ShellcodeGenerator:
         if not hasattr(self, '_skip_auth'):
             # In production, this would use proper logging
             logger.warning(
-                f"Shellcode generation: platform={self.platform}, "
-                f"payload={payload_type}, educational={self.educational}"
+                "Shellcode generation: platform=%s, payload=%s, educational=%s",
+                self.platform, payload_type, self.educational
             )
     
     def _generate_payload(self, payload_type: str, **kwargs: Any) -> bytes:
@@ -145,7 +146,8 @@ class ShellcodeGenerator:
         if hasattr(encoder, 'encode'):
             # Single encoder
             return encoder.encode(shellcode)
-        elif isinstance(encoder, (list, tuple)):
+        
+        if isinstance(encoder, (list, tuple)):
             # Multiple encoders
             for single_encoder in encoder:
                 if hasattr(single_encoder, 'encode'):
@@ -153,8 +155,8 @@ class ShellcodeGenerator:
                 else:
                     raise ValueError(f"Invalid encoder in list: {single_encoder}")
             return shellcode
-        else:
-            raise ValueError(f"Invalid encoder: {encoder}")
+        
+        raise ValueError(f"Invalid encoder: {encoder}")
     
     def _get_available_payloads(self) -> List[str]:
         """Get list of available payloads."""

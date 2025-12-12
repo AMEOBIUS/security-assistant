@@ -36,6 +36,20 @@ class WAFBypassEngine:
             "javascript", "mixed_case", "null_bytes", "comments", "whitespace"
         ]
         
+        self._technique_map = {
+            "url": self._url_encode,
+            "double_url": self._double_url_encode,
+            "hex": self._hex_encode,
+            "base64": self._base64_encode,
+            "unicode": self._unicode_encode,
+            "html": self._html_encode,
+            "javascript": self._javascript_encode,
+            "mixed_case": self._mixed_case,
+            "null_bytes": self._null_bytes,
+            "comments": self._add_comments,
+            "whitespace": self._add_whitespace
+        }
+        
         # Validate configuration
         self._validate_configuration()
         
@@ -73,32 +87,12 @@ class WAFBypassEngine:
     def _apply_technique(self, payload: str, technique: str) -> str:
         """Apply specific obfuscation technique."""
         try:
-            if technique == "url":
-                return self._url_encode(payload)
-            elif technique == "double_url":
-                return self._double_url_encode(payload)
-            elif technique == "hex":
-                return self._hex_encode(payload)
-            elif technique == "base64":
-                return self._base64_encode(payload)
-            elif technique == "unicode":
-                return self._unicode_encode(payload)
-            elif technique == "html":
-                return self._html_encode(payload)
-            elif technique == "javascript":
-                return self._javascript_encode(payload)
-            elif technique == "mixed_case":
-                return self._mixed_case(payload)
-            elif technique == "null_bytes":
-                return self._null_bytes(payload)
-            elif technique == "comments":
-                return self._add_comments(payload)
-            elif technique == "whitespace":
-                return self._add_whitespace(payload)
-            else:
-                return payload
+            handler = self._technique_map.get(technique)
+            if handler:
+                return handler(payload)
+            return payload
         except Exception as e:
-            logger.error(f"Technique {technique} failed: {e}")
+            logger.error("Technique %s failed: %s", technique, e)
             return payload
     
     def _url_encode(self, payload: str) -> str:

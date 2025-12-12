@@ -27,7 +27,7 @@ Session 89:     ░░░░░░░░░░░░░░░░░░░░   0
 - **Session 80:** Authorization & ToS (Done)
 - **Session 81:** Nmap Integration (Done)
 - **Session 82:** SQLMap Integration (Done)
-- **Session 83:** OWASP ZAP Integration (Done)
+- **Session 83:** OWASP ZAP Integration (Deferred/Missing)
 - **Session 84:** Technical Debt Refactoring (Done)
 - **Session 85:** Shellcode Generator (Done)
 

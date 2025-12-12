@@ -22,10 +22,10 @@ Example usage:
 """
 
 import logging
-import subprocess
 import xml.etree.ElementTree as ET
 from typing import Dict, List, Optional, Union
 
+from security_assistant.common.executor import CommandExecutionError, CommandExecutor
 from security_assistant.offensive.base_offensive_scanner import OffensiveScanner
 
 logger = logging.getLogger(__name__)
@@ -71,25 +71,18 @@ class NmapScanner(OffensiveScanner):
     def _check_nmap_installation(self):
         """Check if Nmap is installed on the system."""
         try:
-            result = subprocess.run(
+            result = CommandExecutor.run(
                 ["nmap", "--version"],
-                capture_output=True,
-                text=True,
-                timeout=5
+                timeout=5,
+                check=True
             )
-            
-            if result.returncode != 0:
-                raise NmapNotInstalledError(
-                    "Nmap is not installed. Please install Nmap from https://nmap.org/ "
-                    "and ensure it's in your PATH."
-                )
             
             logger.info(f"Nmap installed: {result.stdout.strip()}")
             
-        except (subprocess.TimeoutExpired, FileNotFoundError):
-            raise NmapNotInstalledError(  # noqa: B904
-                "Nmap is not installed or not in PATH. "
-                "Install from https://nmap.org/"
+        except (CommandExecutionError, FileNotFoundError):
+            raise NmapNotInstalledError(
+                "Nmap is not installed. Please install Nmap from https://nmap.org/ "
+                "and ensure it's in your PATH."
             )
     
     def scan(
@@ -139,18 +132,11 @@ class NmapScanner(OffensiveScanner):
         
         try:
             # Execute Nmap
-            result = subprocess.run(
+            result = CommandExecutor.run(
                 cmd,
-                capture_output=True,
-                text=True,
-                timeout=300  # 5 minute timeout
+                timeout=300,
+                check=True
             )
-            
-            if result.returncode != 0:
-                error_msg = result.stderr or result.stdout or "Unknown error"
-                raise NmapScanFailedError(
-                    f"Nmap scan failed with return code {result.returncode}: {error_msg}"
-                )
             
             # Parse XML output
             scan_result = self._parse_nmap_xml(result.stdout)
@@ -158,10 +144,10 @@ class NmapScanner(OffensiveScanner):
             # Standardize result
             return self._standardize_result(scan_result)
             
-        except subprocess.TimeoutExpired:
-            raise NmapScanFailedError("Nmap scan timed out after 5 minutes")  # noqa: B904
+        except CommandExecutionError as e:
+            raise NmapScanFailedError(f"Nmap scan failed: {e}") from e
         except Exception as e:
-            raise NmapScanFailedError(f"Nmap scan failed: {str(e)}")  # noqa: B904
+            raise NmapScanFailedError(f"Nmap scan failed: {e}") from e
     
     def _build_nmap_command(
         self,

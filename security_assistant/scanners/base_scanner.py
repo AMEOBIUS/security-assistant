@@ -12,15 +12,14 @@ All scanners (Bandit, Semgrep, Trivy) extend this base class.
 Version: 1.0.0
 """
 
-import json
 import logging
 import shutil
-import subprocess
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Dict, Generic, List, Optional, TypeVar
 
+from ..common.executor import CommandExecutionError, CommandExecutor
 from ..gitlab_api import IssueData
 
 logger = logging.getLogger(__name__)
@@ -245,29 +244,26 @@ class BaseScanner(ABC, Generic[F, R]):
             ScannerError: On execution failure
         """
         cmd = self._build_command(targets, **kwargs)
-        logger.debug(f"[{self.name}] Running: {' '.join(cmd)}")
-
+        
         try:
-            result = subprocess.run(
-                cmd, capture_output=True, text=True, timeout=self.config.timeout
+            result = CommandExecutor.run(
+                cmd,
+                timeout=self.config.timeout,
+                check=True,
+                valid_return_codes=self._valid_return_codes()
             )
+            
+            # Additional JSON validation logic which was present before
+            import json
+            try:
+                return self._parse_output(result.stdout)
+            except json.JSONDecodeError as e:
+                raise ScannerError(f"{self.name} returned invalid JSON: {e}")
 
-            # Most scanners return exit code 1 if issues found (expected)
-            if result.returncode not in self._valid_return_codes():
-                raise ScannerError(
-                    f"{self.name} failed with exit code {result.returncode}: {result.stderr}"
-                )
-
-            return self._parse_output(result.stdout)
-
-        except subprocess.TimeoutExpired:
-            raise ScannerError(
-                f"{self.name} scan timed out after {self.config.timeout}s"
-            )
-        except json.JSONDecodeError as e:
-            raise ScannerError(f"{self.name} returned invalid JSON: {e}")
-        except subprocess.SubprocessError as e:
-            raise ScannerError(f"Failed to run {self.name}: {e}")
+        except CommandExecutionError as e:
+            raise ScannerError(f"{self.name} failed: {e}") from e
+        except Exception as e:
+            raise ScannerError(f"Failed to run {self.name}: {e}") from e
 
     def _valid_return_codes(self) -> List[int]:
         """Return codes considered successful (override if needed)."""

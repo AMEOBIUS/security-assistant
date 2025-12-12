@@ -178,39 +178,8 @@ class WAFDetector:
             response = self.session.get(url, timeout=self.timeout, allow_redirects=True)
             
             detected_wafs = []
-            
-            # Check headers
-            for waf_name, signatures in self.WAF_SIGNATURES.items():
-                header_signatures = signatures.get("headers", [])
-                for header in header_signatures:
-                    if ":" in header:
-                        header_name, header_value = header.split(":", 1)
-                        if header_name.strip().lower() in response.headers:
-                            if header_value.strip().lower() in response.headers[header_name.strip().lower()].lower():
-                                detected_wafs.append({
-                                    "waf": waf_name,
-                                    "evidence": f"Header: {header_name}",
-                                    "source": "header"
-                                })
-                    else:
-                        if header.lower() in response.headers:
-                            detected_wafs.append({
-                                "waf": waf_name,
-                                "evidence": f"Header: {header}",
-                                "source": "header"
-                            })
-            
-            # Check cookies
-            for waf_name, signatures in self.WAF_SIGNATURES.items():
-                cookie_signatures = signatures.get("cookies", [])
-                for cookie in cookie_signatures:
-                    if any(cookie.lower() in c.name.lower() or cookie.lower() in c.value.lower() 
-                          for c in response.cookies):
-                        detected_wafs.append({
-                            "waf": waf_name,
-                            "evidence": f"Cookie: {cookie}",
-                            "source": "cookie"
-                        })
+            detected_wafs.extend(self._check_headers(response))
+            detected_wafs.extend(self._check_cookies(response))
             
             if detected_wafs:
                 # Group by WAF and count evidence
@@ -233,8 +202,47 @@ class WAFDetector:
             return {"detected": False, "waf_type": "None", "confidence": "low", "evidence": []}
             
         except Exception as e:
-            logger.warning(f"Passive detection failed: {e}")
+            logger.warning("Passive detection failed: %s", e)
             return {"detected": False, "waf_type": "None", "confidence": "low", "error": str(e)}
+
+    def _check_headers(self, response) -> List[Dict[str, str]]:
+        """Check response headers for WAF signatures."""
+        detected = []
+        for waf_name, signatures in self.WAF_SIGNATURES.items():
+            header_signatures = signatures.get("headers", [])
+            for header in header_signatures:
+                if ":" in header:
+                    header_name, header_value = header.split(":", 1)
+                    if header_name.strip().lower() in response.headers:
+                        if header_value.strip().lower() in response.headers[header_name.strip().lower()].lower():
+                            detected.append({
+                                "waf": waf_name,
+                                "evidence": f"Header: {header_name}",
+                                "source": "header"
+                            })
+                else:
+                    if header.lower() in response.headers:
+                        detected.append({
+                            "waf": waf_name,
+                            "evidence": f"Header: {header}",
+                            "source": "header"
+                        })
+        return detected
+
+    def _check_cookies(self, response) -> List[Dict[str, str]]:
+        """Check response cookies for WAF signatures."""
+        detected = []
+        for waf_name, signatures in self.WAF_SIGNATURES.items():
+            cookie_signatures = signatures.get("cookies", [])
+            for cookie in cookie_signatures:
+                if any(cookie.lower() in c.name.lower() or cookie.lower() in c.value.lower() 
+                      for c in response.cookies):
+                    detected.append({
+                        "waf": waf_name,
+                        "evidence": f"Cookie: {cookie}",
+                        "source": "cookie"
+                    })
+        return detected
     
     def _active_detection(self, url: str, max_tests: int = 3) -> Dict[str, any]:
         """Active WAF detection using test payloads."""
@@ -282,7 +290,7 @@ class WAFDetector:
                             })
                 
             except Exception as e:
-                logger.warning(f"Test payload {i+1} failed: {e}")
+                logger.warning("Test payload %d failed: %s", i + 1, e)
                 continue
         
         if results:
@@ -330,7 +338,7 @@ class WAFDetector:
             return {"detected": False, "waf_type": "None", "confidence": "low"}
             
         except Exception as e:
-            logger.warning(f"Error page analysis failed: {e}")
+            logger.warning("Error page analysis failed: %s", e)
             return {"detected": False, "waf_type": "None", "confidence": "low", "error": str(e)}
     
     def detect_waf_batch(self, urls: List[str]) -> List[Dict[str, any]]:

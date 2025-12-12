@@ -20,7 +20,7 @@ Our goal is to bring enterprise-grade security orchestration to every developer'
 ### Offensive Security Suite (New in v2.0)
 - [x] **Nmap Integration**: Network discovery and port scanning
 - [x] **SQLMap Integration**: Automated SQL injection exploitation
-- [x] **OWASP ZAP Integration**: Active web application scanning
+- [ ] **OWASP ZAP Integration**: Active web application scanning (Pending Implementation)
 - [x] **Shellcode Generator**: Custom payload generation for security research
 - [x] **WAF Bypass Engine**: Evasion techniques for penetration testing
 - [x] **CTF Mode**: Gamified security challenges

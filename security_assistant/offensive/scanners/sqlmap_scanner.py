@@ -22,9 +22,9 @@ Example usage:
 
 import json
 import logging
-import subprocess
 from typing import Dict, List, Optional, Union
 
+from security_assistant.common.executor import CommandExecutionError, CommandExecutor
 from security_assistant.offensive.base_offensive_scanner import OffensiveScanner
 
 logger = logging.getLogger(__name__)
@@ -70,25 +70,18 @@ class SQLMapScanner(OffensiveScanner):
     def _check_sqlmap_installation(self):
         """Check if SQLMap is installed on the system."""
         try:
-            result = subprocess.run(
+            result = CommandExecutor.run(
                 ["sqlmap", "--version"],
-                capture_output=True,
-                text=True,
-                timeout=5
+                timeout=5,
+                check=True
             )
-            
-            if result.returncode != 0:
-                raise SQLMapNotInstalledError(
-                    "SQLMap is not installed. Please install SQLMap from https://sqlmap.org/ "
-                    "and ensure it's in your PATH."
-                )
             
             logger.info(f"SQLMap installed: {result.stdout.strip()}")
             
-        except (subprocess.TimeoutExpired, FileNotFoundError):
-            raise SQLMapNotInstalledError(  # noqa: B904
-                "SQLMap is not installed or not in PATH. "
-                "Install from https://sqlmap.org/"
+        except (CommandExecutionError, FileNotFoundError):
+            raise SQLMapNotInstalledError(
+                "SQLMap is not installed. Please install SQLMap from https://sqlmap.org/ "
+                "and ensure it's in your PATH."
             )
     
     def scan(
@@ -142,18 +135,11 @@ class SQLMapScanner(OffensiveScanner):
         
         try:
             # Execute SQLMap
-            result = subprocess.run(
+            result = CommandExecutor.run(
                 cmd,
-                capture_output=True,
-                text=True,
-                timeout=600  # 10 minute timeout
+                timeout=600,
+                check=True
             )
-            
-            if result.returncode != 0:
-                error_msg = result.stderr or result.stdout or "Unknown error"
-                raise SQLMapScanFailedError(
-                    f"SQLMap scan failed with return code {result.returncode}: {error_msg}"
-                )
             
             # Parse output
             if output_format == "json":
@@ -166,10 +152,10 @@ class SQLMapScanner(OffensiveScanner):
             # Standardize result
             return self._standardize_result(scan_result)
             
-        except subprocess.TimeoutExpired:
-            raise SQLMapScanFailedError("SQLMap scan timed out after 10 minutes")  # noqa: B904
+        except CommandExecutionError as e:
+            raise SQLMapScanFailedError(f"SQLMap scan failed: {e}") from e
         except Exception as e:
-            raise SQLMapScanFailedError(f"SQLMap scan failed: {str(e)}")  # noqa: B904
+            raise SQLMapScanFailedError(f"SQLMap scan failed: {e}") from e
     
     def _build_sqlmap_command(
         self,
