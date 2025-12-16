@@ -159,3 +159,10 @@ code_analysis_results.json
 
 # Session reports
 SESSION_*.md 
+
+*SESSION*PLAN*.md
+*SESSION*REFLECTION*.md
+docs/sessions/
+docs/INTERNAL/
+
+docs/deployment/
