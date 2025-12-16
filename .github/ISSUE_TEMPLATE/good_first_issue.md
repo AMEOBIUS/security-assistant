@@ -1,9 +1,10 @@
 ---
 name: Good First Issue
 about: Beginner-friendly task for new contributors
-title: '[GOOD FIRST ISSUE] '
-labels: 'good first issue, help wanted'
+title: "[GOOD FIRST ISSUE] "
+labels: good first issue, help wanted
 assignees: ''
+
 ---
 
 ## Task Description
